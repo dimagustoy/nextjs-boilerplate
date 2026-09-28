@@ -1,0 +1,29 @@
+import { createClient } from "@supabase/supabase-js";
+import { NextRequest, NextResponse } from "next/server";
+
+export async function POST(request: NextRequest) {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const publicKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  const secret = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !publicKey || !secret) return NextResponse.json({ error: "Приглашения ещё не настроены в Vercel" }, { status: 503 });
+  const token = request.headers.get("authorization")?.replace(/^Bearer /, "");
+  if (!token) return NextResponse.json({ error: "Требуется вход" }, { status: 401 });
+  const auth = createClient(url, publicKey, { auth: { persistSession: false } });
+  const admin = createClient(url, secret, { auth: { persistSession: false, autoRefreshToken: false } });
+  const { data: { user }, error: authError } = await auth.auth.getUser(token);
+  if (authError || !user) return NextResponse.json({ error: "Недействительная сессия" }, { status: 401 });
+  const { data: owner } = await admin.from("profiles").select("role,is_active").eq("id", user.id).single();
+  if (owner?.role !== "owner" || !owner.is_active) return NextResponse.json({ error: "Доступ запрещён" }, { status: 403 });
+  let input: { email?: string; full_name?: string; role?: string };
+  try { input = await request.json(); } catch { return NextResponse.json({ error: "Некорректные данные" }, { status: 400 }); }
+  const email = input.email?.trim().toLowerCase();
+  const fullName = input.full_name?.trim();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !fullName || fullName.length > 100 || !["manager", "smm", "senior_master"].includes(input.role || "")) {
+    return NextResponse.json({ error: "Проверьте имя, email и роль" }, { status: 400 });
+  }
+  const { data, error } = await admin.auth.admin.inviteUserByEmail(email, { data: { full_name: fullName } });
+  if (error || !data.user) return NextResponse.json({ error: error?.message || "Не удалось пригласить" }, { status: 400 });
+  const { error: profileError } = await admin.from("profiles").upsert({ id: data.user.id, full_name: fullName, role: input.role, is_active: true });
+  if (profileError) return NextResponse.json({ error: `Приглашение отправлено, но профиль не сохранён: ${profileError.message}` }, { status: 500 });
+  return NextResponse.json({ ok: true });
+}
