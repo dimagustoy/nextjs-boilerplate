@@ -1,65 +1,168 @@
-import Image from "next/image";
+"use client";
+
+import { FormEvent, useState } from "react";
+import { supabase } from "./lib/supabase";
 
 export default function Home() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleLogin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setLoading(true);
+    setError("");
+
+    const { data, error: loginError } =
+      await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+    if (loginError) {
+      setError("Не удалось войти. Проверь email и пароль.");
+      setLoading(false);
+      return;
+    }
+
+    if (!data.user) {
+      setError("Пользователь не найден.");
+      setLoading(false);
+      return;
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("full_name, role, is_active")
+      .eq("id", data.user.id)
+      .single();
+
+    if (profileError || !profile) {
+      setError("Не удалось загрузить профиль сотрудника.");
+      await supabase.auth.signOut();
+      setLoading(false);
+      return;
+    }
+
+    if (!profile.is_active) {
+      setError("Эта учётная запись отключена.");
+      await supabase.auth.signOut();
+      setLoading(false);
+      return;
+    }
+
+    localStorage.setItem(
+      "nu_profile",
+      JSON.stringify({
+        id: data.user.id,
+        name: profile.full_name,
+        role: profile.role,
+      })
+    );
+
+    window.location.href = "/dashboard";
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <main className="min-h-screen bg-neutral-950 text-white">
+      <div className="mx-auto flex min-h-screen max-w-7xl">
+        <section className="hidden w-1/2 flex-col justify-between border-r border-white/10 p-12 lg:flex">
+          <div>
+            <div className="text-sm font-semibold tracking-[0.25em] text-white/50">
+              НЕ УСЛОЖНЯЙ
+            </div>
+          </div>
+
+          <div>
+            <h1 className="max-w-xl text-6xl font-semibold leading-[1.05] tracking-tight">
+              Управление
+              <br />
+              без хаоса.
+            </h1>
+
+            <p className="mt-6 max-w-md text-lg leading-8 text-white/50">
+              Задачи, дедлайны, ответственность и контроль команды
+              в одном месте.
+            </p>
+          </div>
+
+          <div className="text-sm text-white/30">
+            Внутренняя система управления
+          </div>
+        </section>
+
+        <section className="flex w-full items-center justify-center p-6 lg:w-1/2">
+          <div className="w-full max-w-md">
+            <div className="mb-10 lg:hidden">
+              <div className="text-sm font-semibold tracking-[0.25em] text-white/50">
+                НЕ УСЛОЖНЯЙ
+              </div>
+            </div>
+
+            <div className="mb-8">
+              <h2 className="text-3xl font-semibold tracking-tight">
+                Вход
+              </h2>
+              <p className="mt-2 text-white/50">
+                Войди в свою рабочую панель.
+              </p>
+            </div>
+
+            <form onSubmit={handleLogin} className="space-y-5">
+              <div>
+                <label className="mb-2 block text-sm text-white/60">
+                  Email
+                </label>
+
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  required
+                  autoComplete="email"
+                  placeholder="name@company.ru"
+                  className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3.5 outline-none transition focus:border-white/30"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm text-white/60">
+                  Пароль
+                </label>
+
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  required
+                  autoComplete="current-password"
+                  placeholder="••••••••"
+                  className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3.5 outline-none transition focus:border-white/30"
+                />
+              </div>
+
+              {error && (
+                <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                  {error}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full rounded-xl bg-white px-4 py-3.5 font-medium text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {loading ? "Входим..." : "Войти"}
+              </button>
+            </form>
+
+            <div className="mt-8 border-t border-white/10 pt-6 text-sm text-white/30">
+              Доступ только для сотрудников «Не Усложняй»
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
   );
 }
