@@ -157,7 +157,7 @@ create policy nu_deadlines_read on public.deadline_requests for select to authen
 using (exists (select 1 from public.tasks t where t.id = task_id and public.nu_can_view_task(t)));
 create policy nu_deadlines_insert on public.deadline_requests for insert to authenticated
 with check (requested_by = auth.uid() and exists
-  (select 1 from public.tasks t where t.id = task_id and t.assignee_id = auth.uid())));
+  (select 1 from public.tasks t where t.id = task_id and t.assignee_id = auth.uid()));
 create policy nu_deadlines_update on public.deadline_requests for update to authenticated
 using (exists (select 1 from public.tasks t where t.id = task_id and public.nu_can_assign(t.assignee_id)))
 with check (exists (select 1 from public.tasks t where t.id = task_id and public.nu_can_assign(t.assignee_id)));
