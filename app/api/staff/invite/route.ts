@@ -6,6 +6,7 @@ export async function POST(request: NextRequest) {
   const publicKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   const secret = process.env.SUPABASE_SECRET_KEY;
   if (!url || !publicKey || !secret) return NextResponse.json({ error: "Приглашения ещё не настроены в Vercel" }, { status: 503 });
+  if (/\s/.test(secret)) return NextResponse.json({ error: "Ключ Supabase в Vercel содержит пробел или перенос строки. Создайте новый ключ и замените значение переменной SUPABASE_SECRET_KEY." }, { status: 503 });
   const token = request.headers.get("authorization")?.replace(/^Bearer /, "");
   if (!token) return NextResponse.json({ error: "Требуется вход" }, { status: 401 });
   const auth = createClient(url, publicKey, { auth: { persistSession: false } });
@@ -23,9 +24,13 @@ export async function POST(request: NextRequest) {
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !fullName || fullName.length > 100 || !["manager", "smm", "senior_master"].includes(input.role || "")) {
     return NextResponse.json({ error: "Проверьте имя, email и роль" }, { status: 400 });
   }
-  const { data, error } = await admin.auth.admin.inviteUserByEmail(email, { data: { full_name: fullName } });
-  if (error || !data.user) return NextResponse.json({ error: error?.message || "Не удалось пригласить" }, { status: 400 });
-  const { error: saveError } = await admin.from("profiles").upsert({ id: data.user.id, full_name: fullName, role: input.role, is_active: true });
-  if (saveError) return NextResponse.json({ error: `Приглашение отправлено, но профиль не сохранён: ${saveError.message}` }, { status: 500 });
+  try {
+    const { data, error } = await admin.auth.admin.inviteUserByEmail(email, { data: { full_name: fullName } });
+    if (error || !data.user) return NextResponse.json({ error: error?.message || "Не удалось пригласить" }, { status: 400 });
+    const { error: saveError } = await admin.from("profiles").upsert({ id: data.user.id, full_name: fullName, role: input.role, is_active: true });
+    if (saveError) return NextResponse.json({ error: `Приглашение отправлено, но профиль не сохранён: ${saveError.message}` }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: "Supabase отклонил серверный ключ. Проверьте SUPABASE_SECRET_KEY в Vercel." }, { status: 503 });
+  }
   return NextResponse.json({ ok: true });
 }
