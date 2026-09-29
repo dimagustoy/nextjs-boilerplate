@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Проверьте имя, email и роль" }, { status: 400 });
   }
   try {
-    const { data, error } = await admin.auth.admin.inviteUserByEmail(email, { data: { full_name: fullName } });
+    const { data, error } = await admin.auth.admin.inviteUserByEmail(email, { data: { full_name: fullName }, redirectTo: request.nextUrl.origin });
     if (error || !data.user) return NextResponse.json({ error: error?.message || "Не удалось пригласить" }, { status: 400 });
     const { error: saveError } = await admin.from("profiles").upsert({ id: data.user.id, full_name: fullName, role: input.role, is_active: true });
     if (saveError) return NextResponse.json({ error: `Приглашение отправлено, но профиль не сохранён: ${saveError.message}` }, { status: 500 });
