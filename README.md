@@ -34,3 +34,13 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Система задач «Не Усложняй»
+
+Выполните SQL из `supabase/migrations/20260929010000_task_management.sql` в SQL Editor проекта Supabase **один раз** до публикации новой версии. Миграция использует существующие таблицы `profiles`, `projects`, `tasks`, `task_comments`, `task_history`, `deadline_requests` и меняет политики RLS и триггеры для них. Существующие Auth и данные остаются на месте. Перед применением проверьте, что это исправленная миграция без `create table public.nu_*`.
+
+В Vercel должны быть установлены `NEXT_PUBLIC_SUPABASE_URL` и `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Локально сохраните эти две переменные в `.env.local` (файл игнорируется Git). Затем запустите `npm ci` и `npm run build`.
+
+Для приглашения сотрудников создайте `sb_secret_...` в Supabase Settings → API Keys и задайте в Vercel переменную **`SUPABASE_SECRET_KEY`** типа Secret для Preview и Production. Не используйте префикс `NEXT_PUBLIC_` и не записывайте значение в Git. Серверный маршрут проверяет действующий токен и роль владельца перед вызовом Supabase Auth Admin. Владелец также может менять роль и активность на вкладке «Команда». Если переменная не настроена, приглашения вернут понятную ошибку; остальные возможности приложения продолжат работать.
+
+Публикуйте код после успешного применения миграции и проверки прав на тестовых пользователях. Просрочка определяется по `deadline` и текущему времени, завершённые задачи из подсчёта исключены. Даты отображаются по Екатеринбургу.
