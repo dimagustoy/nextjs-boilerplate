@@ -22,6 +22,13 @@ const field = "w-full rounded-xl border border-white/10 bg-neutral-900 px-4 py-3
 const button = "rounded-xl border border-white/15 px-4 py-2.5 text-sm hover:bg-white/10 disabled:opacity-40";
 const panel = "rounded-2xl border border-white/10 bg-white/[0.03] p-5 md:p-6";
 const fmt = (v: string) => new Intl.DateTimeFormat("ru-RU", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Yekaterinburg" }).format(new Date(v));
+const toYekatInput = (v: string) => {
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Yekaterinburg", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date(v));
+  const value = (type: string) => parts.find(part => part.type === type)?.value || "00";
+  return `${value("year")}-${value("month")}-${value("day")}T${value("hour")}:${value("minute")}`;
+};
+const fromYekatInput = (v: string) => new Date(`${v}:00+05:00`).toISOString();
+const yekatDay = (v: string) => toYekatInput(v).slice(0, 10);
 const overdue = (t: Task) => t.status !== "completed" && new Date(t.deadline).getTime() < Date.now();
 const errorText = (e: { message: string } | null) => e?.message || "Не удалось выполнить действие";
 
@@ -88,7 +95,7 @@ export default function Dashboard() {
     if (filter.project && t.project_id !== filter.project) return false;
     if (filter.status && t.status !== filter.status) return false;
     if (filter.due === "overdue" && !overdue(t)) return false;
-    if (filter.due === "today" && new Date(t.deadline).toDateString() !== new Date(clock).toDateString()) return false;
+    if (filter.due === "today" && yekatDay(t.deadline) !== yekatDay(new Date(clock).toISOString())) return false;
     if (filter.due === "week" && (new Date(t.deadline).getTime() < clock || new Date(t.deadline).getTime() > clock + 7 * 86400000)) return false;
     return true;
   }), [tasks, tab, me, filter, clock]);
@@ -116,8 +123,8 @@ export default function Dashboard() {
     e.preventDefault();
     if (!form.expected_result.trim() || !form.assignee_id || !form.due_at) return;
     if (!me) return;
-    const values = { title: form.title.trim(), description: form.description.trim(), expected_result: form.expected_result.trim(), assignee_id: form.assignee_id, project_id: form.project_id || null, priority: form.priority, deadline: new Date(form.due_at).toISOString() };
-    const ok = await mutate(() => editing && task ? supabase.from("tasks").update(values).eq("id", task.id) : supabase.from("tasks").insert({ ...values, created_by: me.id }), editing ? "Задача обновлена" : "Задача создана");
+    const values = { title: form.title.trim(), description: form.description.trim(), expected_result: form.expected_result.trim(), assignee_id: form.assignee_id, project_id: form.project_id || null, priority: form.priority, deadline: fromYekatInput(form.due_at) };
+    const ok = await mutate(() => task ? supabase.from("tasks").update(values).eq("id", task.id) : supabase.from("tasks").insert({ ...values, created_by: me.id }), task ? "Задача обновлена" : "Задача создана");
     if (ok) { setEditing(false); if (!task) setSelected(null); }
   }
   async function changeStatus(status: Status) {
@@ -130,7 +137,7 @@ export default function Dashboard() {
   }
   async function askDeadline(e: FormEvent) {
     e.preventDefault(); if (!task || !reason.trim() || !proposed) return;
-    if (await mutate(() => supabase.from("deadline_requests").insert({ task_id: task.id, requested_by: me!.id, old_deadline: task.deadline, requested_deadline: new Date(proposed).toISOString(), reason: reason.trim() }), "Запрос отправлен")) { setReason(""); setProposed(""); }
+    if (await mutate(() => supabase.from("deadline_requests").insert({ task_id: task.id, requested_by: me!.id, old_deadline: task.deadline, requested_deadline: fromYekatInput(proposed), reason: reason.trim() }), "Запрос отправлен")) { setReason(""); setProposed(""); }
   }
   async function resolve(id: string, status: "approved" | "rejected") {
     await mutate(() => supabase.from("deadline_requests").update({ status }).eq("id", id), status === "approved" ? "Новый срок утверждён" : "Запрос отклонён");
@@ -148,7 +155,7 @@ export default function Dashboard() {
     } catch { setNotice("Ошибка сети при отправке приглашения"); }
   }
   function openCreate() { setForm({ ...blank, assignee_id: candidates[0]?.id || "" }); setSelected(null); setEditing(true); }
-  function openEdit() { if (!task) return; setForm({ title: task.title, description: task.description || "", expected_result: task.expected_result, assignee_id: task.assignee_id, project_id: task.project_id || "", priority: task.priority, due_at: new Date(task.deadline).toISOString().slice(0, 16) }); setEditing(true); }
+  function openEdit() { if (!task) return; setForm({ title: task.title, description: task.description || "", expected_result: task.expected_result, assignee_id: task.assignee_id, project_id: task.project_id || "", priority: task.priority, due_at: toYekatInput(task.deadline) }); setEditing(true); }
 
   if (busy) return <main className="flex min-h-screen items-center justify-center bg-neutral-950 text-white/60">Загрузка...</main>;
   return <main className="min-h-screen bg-neutral-950 text-white">
