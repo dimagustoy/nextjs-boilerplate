@@ -20,7 +20,7 @@ const periodAt = (offset: number) => {
   return new Date(Date.UTC(year, month - 1 + offset, 1)).toISOString().slice(0, 10);
 };
 
-export default function RecurringPanel({ me, staff, projects, tasks, openTask }: { me: Person; staff: Person[]; projects: Project[]; tasks: Task[]; openTask: (id: string) => void }) {
+export default function RecurringPanel({ me, staff, projects, tasks, openTask, refreshTasks }: { me: Person; staff: Person[]; projects: Project[]; tasks: Task[]; openTask: (id: string) => void; refreshTasks: () => Promise<void> }) {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [instances, setInstances] = useState<Instance[]>([]);
   const [form, setForm] = useState(empty);
@@ -63,8 +63,9 @@ export default function RecurringPanel({ me, staff, projects, tasks, openTask }:
         if (generated.error) { setNotice(`Правило сохранено, но задачи не созданы: ${generated.error.message}`); break; }
       }
     }
-    setSaving(false); setShowForm(false); setEditing(null); setForm(empty); await reload();
-    if (!editing) setNotice("Правило создано. Задачи на ближайшие месяцы появятся в общем списке после обновления страницы.");
+    setSaving(false); setShowForm(false); setEditing(null); setForm(empty); await Promise.all([reload(),refreshTasks()]);
+    if (!editing) setNotice("Правило создано. Задачи на ближайшие месяцы добавлены в общий список.");
+    else setNotice("Правило изменено. Уже созданные задачи сохраняют прежние условия; изменения применятся к следующим месяцам.");
   }
   async function toggle(t: Template) {
     const { error } = await supabase.from("recurring_task_templates").update({ is_active: !t.is_active }).eq("id", t.id);
