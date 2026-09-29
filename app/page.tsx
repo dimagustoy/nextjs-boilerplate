@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { supabase } from "./lib/supabase";
 
 export default function Home() {
@@ -8,6 +8,43 @@ export default function Home() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [settingPassword, setSettingPassword] = useState(false);
+
+  useEffect(() => {
+    if (/#.*type=(invite|recovery)/.test(window.location.hash)) setSettingPassword(true);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") setSettingPassword(true);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  async function requestNewLink() {
+    if (!email.trim()) { setError("Введи email сотрудника."); return; }
+    setLoading(true);
+    setError("");
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: window.location.origin });
+    setLoading(false);
+    if (resetError) { setError("Не удалось отправить ссылку. Попробуй позже."); return; }
+    setMessage("Ссылка для установки пароля отправлена на почту.");
+  }
+
+  async function savePassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setLoading(true);
+    setError("");
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      setError("Ссылка истекла. Введи email и запроси новую ссылку.");
+      setSettingPassword(false);
+      setLoading(false);
+      return;
+    }
+    const { error: updateError } = await supabase.auth.updateUser({ password });
+    setLoading(false);
+    if (updateError) { setError(updateError.message); return; }
+    window.location.href = "/dashboard";
+  }
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -105,11 +142,12 @@ export default function Home() {
                 Вход
               </h2>
               <p className="mt-2 text-white/50">
-                Войди в свою рабочую панель.
+                {settingPassword ? "Придумай пароль для входа." : "Войди в свою рабочую панель."}
               </p>
             </div>
 
-            <form onSubmit={handleLogin} className="space-y-5">
+            <form onSubmit={settingPassword ? savePassword : handleLogin} className="space-y-5">
+              {!settingPassword && (
               <div>
                 <label className="mb-2 block text-sm text-white/60">
                   Email
@@ -125,6 +163,7 @@ export default function Home() {
                   className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3.5 outline-none transition focus:border-white/30"
                 />
               </div>
+              )}
 
               <div>
                 <label className="mb-2 block text-sm text-white/60">
@@ -136,7 +175,8 @@ export default function Home() {
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   required
-                  autoComplete="current-password"
+                  autoComplete={settingPassword ? "new-password" : "current-password"}
+                  minLength={settingPassword ? 8 : undefined}
                   placeholder="••••••••"
                   className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3.5 outline-none transition focus:border-white/30"
                 />
@@ -147,15 +187,17 @@ export default function Home() {
                   {error}
                 </div>
               )}
+              {message && <p className="text-sm text-emerald-300">{message}</p>}
 
               <button
                 type="submit"
                 disabled={loading}
                 className="w-full rounded-xl bg-white px-4 py-3.5 font-medium text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {loading ? "Входим..." : "Войти"}
+                {loading ? "Подожди..." : settingPassword ? "Установить пароль" : "Войти"}
               </button>
             </form>
+            {!settingPassword && <button type="button" disabled={loading} onClick={requestNewLink} className="mt-4 text-sm text-white/60 underline hover:text-white">Получить ссылку для установки пароля</button>}
 
             <div className="mt-8 border-t border-white/10 pt-6 text-sm text-white/30">
               Доступ только для сотрудников «Не Усложняй»
