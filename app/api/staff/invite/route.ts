@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const publicKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-  const secret = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const secret = process.env.SUPABASE_SECRET_KEY;
   if (!url || !publicKey || !secret) return NextResponse.json({ error: "Приглашения ещё не настроены в Vercel" }, { status: 503 });
   const token = request.headers.get("authorization")?.replace(/^Bearer /, "");
   if (!token) return NextResponse.json({ error: "Требуется вход" }, { status: 401 });
