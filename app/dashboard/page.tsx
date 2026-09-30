@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 import RecurringPanel from "./RecurringPanel";
+import TelegramPanel from "./TelegramPanel";
 
 type Role = "owner" | "manager" | "smm" | "senior_master";
 type Status = "new" | "accepted" | "in_progress" | "waiting" | "at_risk" | "review" | "completed";
@@ -13,7 +14,7 @@ type Task = { id: string; title: string; description: string | null; expected_re
 type Comment = { id: string; author_id: string; body: string; created_at: string };
 type Event = { id: number; user_id: string | null; action: string; old_value: Record<string, unknown> | null; new_value: Record<string, unknown> | null; created_at: string };
 type DeadlineRequest = { id: string; requested_by: string; requested_deadline: string; reason: string; status: string; created_at: string };
-type Tab = "overview" | "tasks" | "mine" | "recurring" | "team";
+type Tab = "overview" | "tasks" | "mine" | "recurring" | "telegram" | "team";
 const statuses: Status[] = ["new", "accepted", "in_progress", "waiting", "at_risk", "review", "completed"];
 const statusNames: Record<Status, string> = { new: "Новая", accepted: "Принята", in_progress: "В работе", waiting: "Ожидание", at_risk: "Под угрозой", review: "На проверке", completed: "Завершена" };
 const roleNames: Record<Role, string> = { owner: "Владелец", manager: "Управляющий", smm: "SMM", senior_master: "Старший мастер" };
@@ -112,6 +113,16 @@ export default function Dashboard() {
     if (c.error || e.error || r.error) setNotice(errorText(c.error || e.error || r.error));
     setComments((c.data || []) as Comment[]); setEvents((e.data || []) as Event[]); setRequests((r.data || []) as DeadlineRequest[]);
   }, []);
+  useEffect(() => {
+    if (busy) return;
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("task");
+    if (!id) return;
+    params.delete("task");
+    window.history.replaceState(null,"",`${window.location.pathname}${params.size ? `?${params}` : ""}`);
+    if (tasks.some(t => t.id === id)) { setSelected(id); setEditing(false); void loadDetail(id); }
+    else setNotice("Задача удалена или у вас нет доступа к ней.");
+  }, [busy,tasks,loadDetail]);
   function openTask(id: string) { setSelected(id); setEditing(false); void loadDetail(id); }
 
   async function mutate(action: () => PromiseLike<{ error: { message: string } | null }>, success: string) {
@@ -174,7 +185,7 @@ export default function Dashboard() {
     </div></header>
     <div className="mx-auto max-w-7xl px-5 py-7 md:py-10">
       <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">{me?.full_name}, вот что происходит.</h1>
-      <nav className="my-7 flex gap-2 overflow-x-auto pb-1">{([["overview","Обзор"],["tasks","Все задачи"],["mine","Мои задачи"],["recurring","Регулярные"],["team","Команда"]] as [Tab,string][]).map(([key,label]) => <button key={key} onClick={() => setTab(key)} className={`shrink-0 rounded-xl px-4 py-2.5 text-sm ${tab === key ? "bg-white text-black" : "border border-white/10 text-white/60 hover:text-white"}`}>{label}</button>)}</nav>
+      <nav className="my-7 flex gap-2 overflow-x-auto pb-1">{([["overview","Обзор"],["tasks","Все задачи"],["mine","Мои задачи"],["recurring","Регулярные"],["telegram","Telegram"],["team","Команда"]] as [Tab,string][]).map(([key,label]) => <button key={key} onClick={() => setTab(key)} className={`shrink-0 rounded-xl px-4 py-2.5 text-sm ${tab === key ? "bg-white text-black" : "border border-white/10 text-white/60 hover:text-white"}`}>{label}</button>)}</nav>
       {notice && <div role="status" className="mb-5 rounded-xl border border-white/15 bg-white/5 p-3 text-sm">{notice}</div>}
       {tab === "overview" && <><section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="Активные задачи" value={tasks.filter(t => t.status !== "completed").length} />
@@ -185,6 +196,7 @@ export default function Dashboard() {
       {(tab === "tasks" || tab === "mine") && <section className={panel}><div className="flex flex-wrap items-center justify-between gap-4"><div><h2 className="text-xl font-semibold">{tab === "mine" ? "Мои задачи" : "Задачи команды"}</h2><p className="mt-1 text-sm text-white/40">{visible.length} задач</p></div>{candidates.length > 0 && <button onClick={openCreate} className="rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-black">+ Новая задача</button>}</div>
         <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><Select value={filter.employee} onChange={v => setFilter({ ...filter, employee: v })} options={[["","Все сотрудники"],...staff.map(p => [p.id,p.full_name])]} /><Select value={filter.project} onChange={v => setFilter({ ...filter, project: v })} options={[["","Все проекты"],...projects.map(p => [p.id,p.name])]} /><Select value={filter.status} onChange={v => setFilter({ ...filter, status: v })} options={[["","Все статусы"],...statuses.map(s => [s,statusNames[s]])]} /><Select value={filter.due} onChange={v => setFilter({ ...filter, due: v })} options={[["","Любой срок"],["overdue","Просрочено"],["today","Сегодня"],["week","Следующие 7 дней"]]} /></div>
         <TaskList items={visible} name={name} project={project} open={openTask} /></section>}
+      {tab === "telegram" && me && <TelegramPanel owner={me.role === "owner"} />}
       {tab === "recurring" && me && <RecurringPanel me={me} staff={staff} projects={projects} tasks={tasks} openTask={openTask} refreshTasks={refresh} />}
       {tab === "team" && <section className="grid gap-5 lg:grid-cols-[2fr_1fr]"><div className={panel}><h2 className="text-xl font-semibold">Сотрудники</h2><div className="mt-5 space-y-3">{staff.map(p => <div key={p.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 p-4"><div><div className="font-medium">{p.full_name}</div><div className="text-xs text-white/40">{roleNames[p.role]} · {p.is_active ? "Активен" : "Отключён"} · {tasks.filter(t => t.assignee_id === p.id && t.status !== "completed").length} задач</div></div>{me?.role === "owner" && p.id !== me.id && <div className="flex gap-2"><select aria-label={`Роль ${p.full_name}`} value={p.role} className="rounded-lg bg-neutral-800 p-2 text-sm" onChange={e => mutate(() => supabase.from("profiles").update({ role: e.target.value }).eq("id", p.id), "Роль обновлена")}><option value="manager">Управляющий</option><option value="smm">SMM</option><option value="senior_master">Старший мастер</option></select><button className={button} onClick={() => mutate(() => supabase.from("profiles").update({ is_active: !p.is_active }).eq("id", p.id), "Доступ обновлён")}>{p.is_active ? "Отключить" : "Включить"}</button></div>}</div>)}</div>{me?.role === "owner" && <form onSubmit={inviteStaff} className="mt-6 grid gap-3 border-t border-white/10 pt-5 sm:grid-cols-2"><h3 className="font-semibold sm:col-span-2">Пригласить сотрудника</h3><input className={field} required maxLength={100} placeholder="Имя" value={invite.full_name} onChange={e => setInvite({ ...invite, full_name: e.target.value })} /><input className={field} required type="email" placeholder="Email" value={invite.email} onChange={e => setInvite({ ...invite, email: e.target.value })} /><Select value={invite.role} onChange={v => setInvite({ ...invite, role: v })} options={[["manager","Управляющий"],["smm","SMM"],["senior_master","Старший мастер"]]} /><button type="submit" disabled={inviting} className={button}>{inviting ? "Отправляем…" : "Отправить приглашение"}</button>{inviteMessage && <p role="status" aria-live="polite" className="text-sm sm:col-span-2">{inviteMessage}</p>}</form>}</div><div className={panel}><h2 className="text-xl font-semibold">Проекты</h2><div className="mt-4 space-y-2 text-sm">{projects.map(p => <div key={p.id} className="rounded-lg bg-white/5 p-3">{p.name}</div>)}</div>{me?.role === "owner" && <form className="mt-5 flex flex-col gap-2" onSubmit={async e => { e.preventDefault(); if (await mutate(() => supabase.from("projects").insert({ name: projectName.trim(), owner_id: me?.id }), "Проект создан")) setProjectName(""); }}><input className={field} value={projectName} onChange={e => setProjectName(e.target.value)} minLength={2} maxLength={100} required placeholder="Название проекта" /><button className={button}>Добавить проект</button></form>}</div></section>}
     </div>
