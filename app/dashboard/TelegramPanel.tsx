@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 type Connection = { connected: boolean; username?: string; configured: boolean };
-const button = "rounded-xl border border-white/15 px-4 py-2.5 text-sm hover:bg-white/10 disabled:opacity-40";
+const button = "rounded-xl border border-stone-200 px-4 py-2.5 text-sm hover:bg-stone-100 disabled:opacity-40";
 export default function TelegramPanel({ owner }: { owner: boolean }) {
   const [connection,setConnection] = useState<Connection | null>(null);
   const [notice,setNotice] = useState("");
@@ -36,17 +36,18 @@ export default function TelegramPanel({ owner }: { owner: boolean }) {
     } catch(e) { setNotice(e instanceof Error ? e.message : "Ошибка"); }
     finally { setBusy(false); }
   }
-  return <section className="max-w-2xl space-y-5 rounded-2xl border border-white/10 bg-white/[.03] p-5 md:p-6">
+  return <section className="max-w-2xl space-y-5 rounded-2xl border border-stone-200 bg-white p-5 md:p-6">
     <h2 className="text-2xl font-semibold">Telegram</h2>
-    <p className="text-sm text-white/60">Новые задачи, изменения статусов и сроков, комментарии и запросы переноса. Напоминания о дедлайнах начинаются с 08:00 по Екатеринбургу; о просрочках — ежедневно.</p>
+    <p className="text-sm text-stone-600">Новые задачи, изменения статусов и сроков, комментарии и запросы переноса. Напоминания о дедлайнах начинаются с 08:00 по Екатеринбургу; о просрочках — ежедневно.</p>
     <p className="text-sm">{connection?.connected ? `Подключён${connection.username ? `: @${connection.username}` : ""}` : "Ваш Telegram пока не подключён"}</p>
-    {notice && <p role="status" className="rounded-xl border border-white/15 bg-white/5 p-3 text-sm">{notice}</p>}
+    {notice && <p role="status" className="rounded-xl border border-stone-200 bg-stone-50 p-3 text-sm">{notice}</p>}
     <div className="flex flex-wrap gap-2">
       <button disabled={busy || !connection?.configured} className={button} onClick={() => action("connect","POST")}>{connection?.connected ? "Переподключить" : "Подключить Telegram"}</button>
       <button disabled={busy} className={button} onClick={refresh}>Проверить подключение</button>
       {connection?.connected && <><button disabled={busy} className={button} onClick={() => action("test","POST")}>Тестовое сообщение</button><button disabled={busy} className={button} onClick={() => action("connect","DELETE")}>Отключить</button></>}
     </div>
-    {link && <a className="inline-block rounded-xl bg-white px-5 py-3 text-sm font-medium text-black" href={link} target="_blank" rel="noopener noreferrer">Запустить бота в Telegram</a>}
-    {owner && <div className="border-t border-white/10 pt-5"><p className="mb-3 text-sm text-white/50">Первое подключение: после настройки бота нажмите кнопку ниже, затем подключите свой Telegram.</p><button disabled={busy || !connection?.configured} className={button} onClick={() => action("setup","POST")}>Подключить бота к платформе</button></div>}
+    {link && <a className="inline-block rounded-xl bg-[#ff641f] px-5 py-3 text-sm font-medium text-white" href={link} target="_blank" rel="noopener noreferrer">Запустить бота в Telegram</a>}
+    {owner && <div className="border-t border-stone-200 pt-5"><p className="mb-3 text-sm text-stone-600">Первое подключение: после настройки бота нажмите кнопку ниже, затем подключите свой Telegram.</p><button disabled={busy || !connection?.configured} className={button} onClick={() => action("setup","POST")}>Подключить бота к платформе</button></div>}
   </section>;
 }
+

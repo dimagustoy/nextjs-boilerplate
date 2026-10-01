@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { supabase } from "./lib/supabase";
+import { Brand } from "./dashboard/ui";
 
 export default function Home() {
   const [email, setEmail] = useState("");
@@ -102,13 +103,11 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-neutral-950 text-white">
+    <main className="nu-login min-h-screen bg-[#f6f4ef] text-stone-900">
       <div className="mx-auto flex min-h-screen max-w-7xl">
-        <section className="hidden w-1/2 flex-col justify-between border-r border-white/10 p-12 lg:flex">
+        <section className="nu-login-brand hidden w-1/2 flex-col justify-between p-12 lg:flex">
           <div>
-            <div className="text-sm font-semibold tracking-[0.25em] text-white/50">
-              НЕ УСЛОЖНЯЙ
-            </div>
+            <Brand/>
           </div>
 
           <div>
@@ -118,13 +117,13 @@ export default function Home() {
               без хаоса.
             </h1>
 
-            <p className="mt-6 max-w-md text-lg leading-8 text-white/50">
+            <p className="mt-6 max-w-md text-lg leading-8 text-stone-600">
               Задачи, дедлайны, ответственность и контроль команды
               в одном месте.
             </p>
           </div>
 
-          <div className="text-sm text-white/30">
+          <div className="text-sm text-stone-500">
             Внутренняя система управления
           </div>
         </section>
@@ -132,16 +131,14 @@ export default function Home() {
         <section className="flex w-full items-center justify-center p-6 lg:w-1/2">
           <div className="w-full max-w-md">
             <div className="mb-10 lg:hidden">
-              <div className="text-sm font-semibold tracking-[0.25em] text-white/50">
-                НЕ УСЛОЖНЯЙ
-              </div>
+              <Brand/>
             </div>
 
             <div className="mb-8">
               <h2 className="text-3xl font-semibold tracking-tight">
                 Вход
               </h2>
-              <p className="mt-2 text-white/50">
+              <p className="mt-2 text-stone-600">
                 {settingPassword ? "Придумай пароль для входа." : "Войди в свою рабочую панель."}
               </p>
             </div>
@@ -149,7 +146,7 @@ export default function Home() {
             <form onSubmit={settingPassword ? savePassword : handleLogin} className="space-y-5">
               {!settingPassword && (
               <div>
-                <label className="mb-2 block text-sm text-white/60">
+                <label className="mb-2 block text-sm text-stone-600">
                   Email
                 </label>
 
@@ -160,13 +157,13 @@ export default function Home() {
                   required
                   autoComplete="email"
                   placeholder="name@company.ru"
-                  className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3.5 outline-none transition focus:border-white/30"
+                  className="w-full rounded-xl border border-stone-200 bg-white px-4 py-3.5 outline-none transition focus:border-orange-500"
                 />
               </div>
               )}
 
               <div>
-                <label className="mb-2 block text-sm text-white/60">
+                <label className="mb-2 block text-sm text-stone-600">
                   Пароль
                 </label>
 
@@ -178,28 +175,28 @@ export default function Home() {
                   autoComplete={settingPassword ? "new-password" : "current-password"}
                   minLength={settingPassword ? 8 : undefined}
                   placeholder="••••••••"
-                  className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3.5 outline-none transition focus:border-white/30"
+                  className="w-full rounded-xl border border-stone-200 bg-white px-4 py-3.5 outline-none transition focus:border-orange-500"
                 />
               </div>
 
               {error && (
-                <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-700">
                   {error}
                 </div>
               )}
-              {message && <p className="text-sm text-emerald-300">{message}</p>}
+              {message && <p className="text-sm text-emerald-700">{message}</p>}
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-xl bg-white px-4 py-3.5 font-medium text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-50"
+                className="w-full rounded-xl bg-[#ff641f] px-4 py-3.5 font-medium text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading ? "Подожди..." : settingPassword ? "Установить пароль" : "Войти"}
               </button>
             </form>
-            {!settingPassword && <button type="button" disabled={loading} onClick={requestNewLink} className="mt-4 text-sm text-white/60 underline hover:text-white">Получить ссылку для установки пароля</button>}
+            {!settingPassword && <button type="button" disabled={loading} onClick={requestNewLink} className="mt-4 text-sm text-stone-600 underline hover:text-orange-700">Получить ссылку для установки пароля</button>}
 
-            <div className="mt-8 border-t border-white/10 pt-6 text-sm text-white/30">
+            <div className="mt-8 border-t border-stone-200 pt-6 text-sm text-stone-500">
               Доступ только для сотрудников «Не Усложняй»
             </div>
           </div>
@@ -208,3 +205,4 @@ export default function Home() {
     </main>
   );
 }
+
