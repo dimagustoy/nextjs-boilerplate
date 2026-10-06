@@ -7,7 +7,8 @@ const statuses: Record<string,string> = { new: "Новая", accepted: "Прин
 type Item = { id: string; lease_id: string; user_id: string; chat_id: number; task_id: string; kind: string; title: string; status: string; deadline: string; expected_result: string };
 export async function POST(request: Request) {
   if (!sameSecret(request.headers.get("authorization"), process.env.TELEGRAM_DISPATCH_SECRET ? `Bearer ${process.env.TELEGRAM_DISPATCH_SECRET}` : undefined)) return Response.json({ error: "Forbidden" }, { status: 403 });
-  if (process.env.VERCEL_ENV && process.env.VERCEL_ENV !== "production") return Response.json({ error: "Production only" }, { status: 403 });
+  const deployEnv = process.env.NU_ENV || process.env.VERCEL_ENV;
+  if (deployEnv && deployEnv !== "production") return Response.json({ error: "Production only" }, { status: 403 });
   try {
     if (!process.env.TELEGRAM_BOT_TOKEN) return Response.json({ error: "Not configured" }, { status: 503 });
     const admin = adminClient();
@@ -16,13 +17,10 @@ export async function POST(request: Request) {
     const { data, error } = await admin.rpc("nu_telegram_claim", { p_limit: 10 });
     if (error) return Response.json({ error: "Queue unavailable" }, { status: 503 });
     let sent = 0;
-    // Two workers keep requests below Telegram's overall rate limit; leases
-    // prevent two concurrent dispatch calls from taking the same queue item.
     const items = [...(data || [])] as Item[];
     async function worker() {
       let item: Item | undefined;
       while ((item = items.shift())) {
-        // Recheck immediately before delivery: employee/assignment may change.
         const visible = await admin.rpc("nu_telegram_visible", { p_user: item.user_id, p_task: item.task_id });
         const link = await admin.from("telegram_links").select("chat_id").eq("user_id",item.user_id).maybeSingle();
         if (visible.error || link.error) throw new Error("Permission check unavailable");
