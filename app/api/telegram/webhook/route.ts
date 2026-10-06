@@ -1,5 +1,6 @@
 import { adminClient, sameSecret, telegram, tokenHash } from "../../../lib/server/telegram";
 import { renderExecutiveAttention } from "../../../lib/server/jarvis-executive";
+import { cancelCheckinAction, executeCheckinAction, prepareCheckinAction } from "../../../lib/server/jarvis-checkin";
 import {
   cancelPendingAction,
   executePendingAction,
@@ -185,9 +186,21 @@ export async function POST(request: Request) {
         }
       }
 
+      const { data: pendingMeta } = await ctx.admin
+        .from("telegram_pending_actions")
+        .select("action_type")
+        .eq("id", match[2])
+        .eq("user_id", ctx.me.id)
+        .eq("chat_id", chatId)
+        .maybeSingle();
+
       let result: string;
       try {
-        result = match[1] === "ok" ? await executePendingAction(ctx, chatId, match[2]) : await cancelPendingAction(ctx, chatId, match[2]);
+        if (pendingMeta?.action_type === "checkin_batch") {
+          result = match[1] === "ok" ? await executeCheckinAction(ctx, chatId, match[2]) : await cancelCheckinAction(ctx, chatId, match[2]);
+        } else {
+          result = match[1] === "ok" ? await executePendingAction(ctx, chatId, match[2]) : await cancelPendingAction(ctx, chatId, match[2]);
+        }
       } catch (error) {
         console.error("Jarvis callback failed", error);
         result = "Не смог выполнить действие. Запись не изменена. Попробуй ещё раз или открой NU TEAM.";
@@ -241,6 +254,32 @@ export async function POST(request: Request) {
         : "Пока работаю с текстовыми сообщениями. Напиши «помощь», чтобы посмотреть примеры.",
       groupChat ? { reply_parameters: { message_id: message.message_id, allow_sending_without_reply: true } } : {});
       return Response.json({ ok: true });
+    }
+
+    if (privateChat && Number.isSafeInteger(message.reply_to_message?.message_id)) {
+      const { data: checkin } = await ctx.admin
+        .from("telegram_checkin_sessions")
+        .select("id,task_ids,message_id")
+        .eq("user_id", ctx.me.id)
+        .eq("message_id", message.reply_to_message.message_id)
+        .eq("state", "awaiting")
+        .maybeSingle();
+      if (checkin) {
+        const prepared = await prepareCheckinAction(ctx, chatId, checkin, text);
+        if (prepared.error) {
+          await send(chatId, prepared.error);
+        } else if (prepared.actionId && prepared.proposal) {
+          await send(chatId, prepared.proposal, {
+            reply_markup: {
+              inline_keyboard: [[
+                { text: "✅ Подтвердить", callback_data: `j:ok:${prepared.actionId}` },
+                { text: "❌ Отмена", callback_data: `j:no:${prepared.actionId}` },
+              ]],
+            },
+          });
+        }
+        return Response.json({ ok: true });
+      }
     }
 
     if (privateChat) {
