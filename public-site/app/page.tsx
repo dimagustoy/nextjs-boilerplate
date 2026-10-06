@@ -56,7 +56,12 @@ export default function Home() {
         const res = await fetch("/api/content", { cache: "no-store" });
         if (!res.ok) return;
         const data = await res.json();
-        if (Array.isArray(data.articles) && data.articles.length) setArticles(data.articles);
+        if (Array.isArray(data.articles) && data.articles.length) {
+          const liveArticles = data.articles as Article[];
+          const liveSlugs = new Set(liveArticles.map((article) => article.slug));
+          const fillers = fallbackArticles.filter((article) => !liveSlugs.has(article.slug));
+          setArticles([...liveArticles, ...fillers].slice(0, 3));
+        }
       } catch {
         // Fallback stories keep the journal alive before CMS content is filled.
       }
