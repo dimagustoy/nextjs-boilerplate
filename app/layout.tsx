@@ -3,6 +3,7 @@ import "./globals.css";
 import "./network.css";
 import "./place-details.css";
 import NetworkDirectory from "./NetworkDirectory";
+import JournalSourceLinks from "./JournalSourceLinks";
 
 export const metadata: Metadata = {
   title: "Не Усложняй — места, люди, истории",
@@ -12,7 +13,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="ru">
-      <body>{children}<NetworkDirectory /></body>
+      <body>{children}<NetworkDirectory /><JournalSourceLinks /></body>
     </html>
   );
 }
