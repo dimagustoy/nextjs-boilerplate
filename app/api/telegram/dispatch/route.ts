@@ -1,4 +1,4 @@
-import { adminClient, appUrl, sameSecret, telegram, TelegramError } from "../../../lib/server/telegram";
+import { adminClient, appUrl, telegram, TelegramError } from "../../../lib/server/telegram";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -6,12 +6,15 @@ const labels: Record<string,string> = { created: "Новая задача", stat
 const statuses: Record<string,string> = { new: "Новая", accepted: "Принята", in_progress: "В работе", waiting: "Ожидание", at_risk: "Под угрозой", review: "На проверке", completed: "Завершена" };
 type Item = { id: string; lease_id: string; user_id: string; chat_id: number; task_id: string; kind: string; title: string; status: string; deadline: string; expected_result: string };
 export async function POST(request: Request) {
-  if (!sameSecret(request.headers.get("authorization"), process.env.TELEGRAM_DISPATCH_SECRET ? `Bearer ${process.env.TELEGRAM_DISPATCH_SECRET}` : undefined)) return Response.json({ error: "Forbidden" }, { status: 403 });
+  const token = request.headers.get("authorization")?.match(/^Bearer (\S+)$/)?.[1];
+  if (!token) return Response.json({ error: "Forbidden" }, { status: 403 });
   const deployEnv = process.env.NU_ENV || process.env.VERCEL_ENV;
   if (deployEnv && deployEnv !== "production") return Response.json({ error: "Production only" }, { status: 403 });
   try {
     if (!process.env.TELEGRAM_BOT_TOKEN) return Response.json({ error: "Not configured" }, { status: 503 });
     const admin = adminClient();
+    const authorized = await admin.rpc("nu_telegram_dispatch_authorize", { p_secret: token });
+    if (authorized.error || !authorized.data) return Response.json({ error: "Forbidden" }, { status: 403 });
     const reminders = await admin.rpc("nu_telegram_reminders");
     if (reminders.error) return Response.json({ error: "Reminder queue unavailable" }, { status: 503 });
     const { data, error } = await admin.rpc("nu_telegram_claim", { p_limit: 10 });
