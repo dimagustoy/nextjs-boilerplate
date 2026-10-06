@@ -79,6 +79,22 @@ function isGroupChat(type: unknown) {
   return type === "group" || type === "supergroup";
 }
 
+function replyTaskContext(message: any, commandText: string) {
+  const match = commandText.match(/^(?:задача|в задачу|сделай задачей|создай задачу)(?:\s*[:,.\-]?\s*(.*))?$/i);
+  if (!match || !message?.reply_to_message) return commandText;
+
+  const replied = message.reply_to_message;
+  const source = typeof replied.text === "string"
+    ? replied.text.trim()
+    : typeof replied.caption === "string"
+      ? replied.caption.trim()
+      : "";
+  if (!source) return commandText;
+
+  const tail = match[1]?.trim();
+  return `Создай задачу${tail ? ` ${tail}` : ""}. Исходное сообщение: ${source.slice(0, 2000)}`;
+}
+
 export async function POST(request: Request) {
   if (!sameSecret(request.headers.get("x-telegram-bot-api-secret-token"), process.env.TELEGRAM_WEBHOOK_SECRET)) {
     return Response.json({ error: "Forbidden" }, { status: 403 });
@@ -223,7 +239,8 @@ export async function POST(request: Request) {
       }
     }
 
-    const intent = await interpretJarvis(ctx, privateChat ? normalizeJarvisReadQuery(text) : text);
+    const interpretedText = groupChat ? replyTaskContext(message, text) : normalizeJarvisReadQuery(text);
+    const intent = await interpretJarvis(ctx, interpretedText);
     const readReply = renderReadIntent(ctx, intent);
     if (readReply) {
       if (groupChat) {
