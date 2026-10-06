@@ -9,8 +9,15 @@ export async function POST(request: Request) {
     const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
     if (!secret || !/^[A-Za-z0-9_-]{32,256}$/.test(secret)) return Response.json({ error: "Добавьте TELEGRAM_WEBHOOK_SECRET в Vercel (32–256 букв, цифр, _ или -)" }, { status: 503 });
     if (process.env.VERCEL_ENV && process.env.VERCEL_ENV !== "production") return Response.json({ error: "Подключение бота выполняется в основной версии" }, { status: 403 });
-    await telegram("setWebhook", { url: `${appUrl()}/api/telegram/webhook`, secret_token: secret, allowed_updates: ["message"], max_connections: 2 });
+    await telegram("setWebhook", {
+      url: `${appUrl()}/api/telegram/webhook`,
+      secret_token: secret,
+      allowed_updates: ["message", "callback_query"],
+      max_connections: 2,
+    });
     const info = await telegram("getMe", {});
     return Response.json({ ok: true, username: info.username });
-  } catch { return Response.json({ error: "Не удалось настроить бота. Проверьте переменные Telegram в Vercel." }, { status: 503 }); }
+  } catch {
+    return Response.json({ error: "Не удалось настроить бота. Проверьте переменные Telegram в Vercel." }, { status: 503 });
+  }
 }
