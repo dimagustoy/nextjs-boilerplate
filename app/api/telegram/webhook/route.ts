@@ -17,6 +17,32 @@ async function send(chatId: number, text: string, extra: Record<string, unknown>
   return telegram("sendMessage", { chat_id: chatId, text, ...extra });
 }
 
+function normalizeJarvisReadQuery(text: string) {
+  const n = text
+    .toLocaleLowerCase("ru")
+    .replace(/ё/g, "е")
+    .replace(/[^a-zа-я0-9]+/gi, " ")
+    .trim();
+  const tokens = new Set(n.split(/\s+/).filter(Boolean));
+  const hasTaskStem = [...tokens].some(token => token.startsWith("задач"));
+  const hasToday = tokens.has("сегодня") || (tokens.has("на") && tokens.has("день"));
+  const asksOwn =
+    (tokens.has("мои") || tokens.has("моя") || tokens.has("мне") || tokens.has("меня")) ||
+    n.includes("что мне делать") ||
+    n.includes("что у меня") ||
+    n.includes("мой план") ||
+    n.includes("план на сегодня");
+  const isWrite = /(постав|создай|поручи|назнач|добав|перенес|измени|закрой|заверш)/i.test(n);
+
+  if (!isWrite && hasToday && (hasTaskStem || asksOwn)) {
+    return "Какие у меня задачи сегодня?";
+  }
+  if (!isWrite && asksOwn && (n.includes("делать сегодня") || n.includes("план на сегодня"))) {
+    return "Какие у меня задачи сегодня?";
+  }
+  return text;
+}
+
 export async function POST(request: Request) {
   if (!sameSecret(request.headers.get("x-telegram-bot-api-secret-token"), process.env.TELEGRAM_WEBHOOK_SECRET)) {
     return Response.json({ error: "Forbidden" }, { status: 403 });
@@ -78,7 +104,7 @@ export async function POST(request: Request) {
       return Response.json({ ok: true });
     }
 
-    const intent = await interpretJarvis(ctx, text);
+    const intent = await interpretJarvis(ctx, normalizeJarvisReadQuery(text));
     const readReply = renderReadIntent(ctx, intent);
     if (readReply) {
       await send(chatId, readReply);
