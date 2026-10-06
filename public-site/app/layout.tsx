@@ -3,7 +3,6 @@ import "./globals.css";
 import "./network.css";
 import "./place-details.css";
 import "./visual-v2.css";
-import NetworkDirectory from "./NetworkDirectory";
 import JournalSourceLinks from "./JournalSourceLinks";
 
 export const metadata: Metadata = {
@@ -14,7 +13,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="ru">
-      <body>{children}<NetworkDirectory /><JournalSourceLinks /></body>
+      <body>{children}<JournalSourceLinks /></body>
     </html>
   );
 }
