@@ -42,3 +42,31 @@ export async function telegram(method: string, body: Record<string, unknown>) {
   if (!response.ok || !data.ok) throw new TelegramError(data.error_code || response.status, data.parameters?.retry_after || 60);
   return data.result;
 }
+
+let webhookSubscriptionChecked = false;
+
+export async function ensureTelegramWebhookSubscription() {
+  if (webhookSubscriptionChecked) return;
+  if (process.env.VERCEL_ENV && process.env.VERCEL_ENV !== "production") return;
+
+  const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
+  if (!secret || !/^[A-Za-z0-9_-]{32,256}$/.test(secret)) {
+    throw new Error("Telegram webhook secret missing or invalid");
+  }
+
+  const expectedUrl = `${appUrl()}/api/telegram/webhook`;
+  const info = await telegram("getWebhookInfo", {});
+  const allowed = Array.isArray(info?.allowed_updates) ? info.allowed_updates : [];
+  const hasRequiredUpdates = allowed.includes("message") && allowed.includes("callback_query");
+
+  if (info?.url !== expectedUrl || !hasRequiredUpdates) {
+    await telegram("setWebhook", {
+      url: expectedUrl,
+      secret_token: secret,
+      allowed_updates: ["message", "callback_query"],
+      max_connections: 2,
+    });
+  }
+
+  webhookSubscriptionChecked = true;
+}
