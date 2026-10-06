@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import NetworkDirectory from "./NetworkDirectory";
 
 type Article = {
   id?: string;
@@ -25,7 +26,7 @@ const fallbackArticles: Article[] = [
     title: "Гагарин: новый формат внутри знакомого NU",
     excerpt: "Больше пространства, новая кухня и ещё один повод не ехать домой слишком рано.",
     category: "openings",
-    cover_image_url: "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1400&q=88",
+    cover_image_url: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1400&q=88",
   },
   {
     slug: "people-of-nu",
@@ -140,7 +141,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="all-places" className="section all-places" aria-label="Заведения Не Усложняй" />
+      <NetworkDirectory />
 
       <section className="manifesto" id="about">
         <p className="eyebrow light">Зачем мы вообще это сделали</p>
