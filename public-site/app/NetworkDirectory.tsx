@@ -26,20 +26,6 @@ const fallbackPlaces: Place[] = [
   { slug: "ekb-beloglazova-2g", city: "Екатеринбург", name: "Гагарин", address: "бул. Владимира Белоглазова, 2Г" },
 ];
 
-const knownPositions: Record<string, { x: number; y: number }> = {
-  "Петрозаводск": { x: 28, y: 34 },
-  "Ярославль": { x: 32, y: 41 },
-  "Кострома": { x: 34, y: 43 },
-  "Иваново": { x: 33, y: 47 },
-  "Брянск": { x: 27, y: 52 },
-  "Казань": { x: 39, y: 52 },
-  "Самара": { x: 40, y: 60 },
-  "Астрахань": { x: 35, y: 73 },
-  "Екатеринбург": { x: 53, y: 53 },
-  "Тюмень": { x: 58, y: 55 },
-  "Иркутск": { x: 83, y: 62 },
-};
-
 function pluralPlaces(value: number) {
   const last = value % 10;
   const lastTwo = value % 100;
@@ -97,20 +83,6 @@ export default function NetworkDirectory() {
 
   const visible = useMemo(() => places.filter((place) => place.city === city), [places, city]);
 
-  const points = useMemo(() => {
-    return grouped.map((group, index) => {
-      const known = knownPositions[group.name];
-      if (known) return { ...group, ...known };
-      const column = index % 5;
-      const row = Math.floor(index / 5);
-      return {
-        ...group,
-        x: 38 + column * 10,
-        y: 34 + row * 16 + (column % 2) * 5,
-      };
-    });
-  }, [grouped]);
-
   if (!mount) return null;
 
   return createPortal(
@@ -118,48 +90,35 @@ export default function NetworkDirectory() {
       <div className="section-head all-places-head">
         <div>
           <p className="eyebrow">Вся сеть</p>
-          <h2>15 МЕСТ.<br />11 ГОРОДОВ.</h2>
+          <h2>{places.length} МЕСТ.<br />{grouped.length} ГОРОДОВ.</h2>
         </div>
-        <p className="section-intro">Выбирай город на карте, смотри пространство и сразу решай, куда сегодня. Никаких таблиц адресов из 2007 года.</p>
+        <div className="network-head-copy">
+          <p className="section-intro">Выбирай город, смотри его места и сразу строй маршрут. Без карты, которая устаревает быстрее, чем мы успеваем открыть новую точку.</p>
+          <span>Данные обновляются из NU OS</span>
+        </div>
       </div>
 
-      <div className="network-map-shell">
-        <aside className="network-map-sidebar">
-          <div className="network-map-kicker">РОССИЯ</div>
-          <h3>Мы уже здесь.</h3>
-          <p>И продолжаем появляться в новых городах.</p>
-
-          <div className="network-city-list" aria-label="Выбор города">
-            {grouped.map((group) => (
-              <button
-                key={group.name}
-                type="button"
-                className={city === group.name ? "active" : ""}
-                onClick={() => setCity(group.name)}
-              >
-                <span>{group.name}</span>
-                <b>{String(group.count).padStart(2, "0")}</b>
-              </button>
-            ))}
+      <div className="network-city-browser">
+        <div className="network-city-browser-head">
+          <div>
+            <span>Города сети</span>
+            <strong>Выбери свой</strong>
           </div>
-        </aside>
+          <p>{grouped.length} городов · {places.length} {pluralPlaces(places.length)}</p>
+        </div>
 
-        <div className="network-map-visual" aria-label="Карта присутствия Не Усложняй">
-          <div className="network-map-glow" />
-          <div className="network-russia-shape" />
-          <div className="network-map-caption">НЕ УСЛОЖНЯЙ · РОССИЯ</div>
-
-          {points.map((point) => (
+        <div className="network-city-grid" aria-label="Выбор города">
+          {grouped.map((group, index) => (
             <button
-              key={point.name}
+              key={group.name}
               type="button"
-              className={city === point.name ? "network-map-point selected" : "network-map-point"}
-              style={{ left: `${point.x}%`, top: `${point.y}%` }}
-              onClick={() => setCity(point.name)}
-              aria-label={`${point.name}: ${point.count} ${pluralPlaces(point.count)}`}
+              className={city === group.name ? "active" : ""}
+              onClick={() => setCity(group.name)}
             >
-              <span className="network-point-dot" />
-              <span className="network-point-label">{point.name}</span>
+              <span className="network-city-index">{String(index + 1).padStart(2, "0")}</span>
+              <span className="network-city-name">{group.name}</span>
+              <span className="network-city-count">{group.count} {pluralPlaces(group.count)}</span>
+              <span className="network-city-arrow">↘</span>
             </button>
           ))}
         </div>
@@ -167,10 +126,13 @@ export default function NetworkDirectory() {
 
       <div className="selected-city-head">
         <div>
-          <p className="eyebrow">Выбранный город</p>
+          <p className="eyebrow">Сейчас смотрим</p>
           <h3>{city}</h3>
         </div>
-        <span>{visible.length} {pluralPlaces(visible.length)}</span>
+        <div className="selected-city-meta">
+          <span>{visible.length} {pluralPlaces(visible.length)}</span>
+          <small>Фото · рейтинг · маршрут</small>
+        </div>
       </div>
 
       <div className="all-places-grid">
@@ -214,7 +176,7 @@ export default function NetworkDirectory() {
       <div className="network-franchise-bridge">
         <div>
           <span>СЕТЬ РАСТЁТ</span>
-          <h3>Следующая точка на карте<br />может быть твоей.</h3>
+          <h3>Следующий город<br />может быть твоим.</h3>
         </div>
         <a href="#franchise">Открыть Не Усложняй →</a>
       </div>
