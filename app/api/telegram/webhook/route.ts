@@ -60,6 +60,25 @@ function normalizeJarvisReadQuery(text: string) {
   return text;
 }
 
+function groupJarvisCommand(text: string) {
+  const source = text.trim();
+  const patterns = [
+    /^\/jarvis(?:@ne_uslozhnyay_tasks_bot)?(?:\s+|$)/i,
+    /^@ne_uslozhnyay_tasks_bot(?:\s*[:,]\s*|\s+|$)/i,
+    /^(?:джарвис|jarvis)(?:\s*[:,]\s*|\s+|$)/i,
+  ];
+  for (const pattern of patterns) {
+    if (pattern.test(source)) {
+      return { explicit: true, text: source.replace(pattern, "").trim() };
+    }
+  }
+  return { explicit: false, text: source };
+}
+
+function isGroupChat(type: unknown) {
+  return type === "group" || type === "supergroup";
+}
+
 export async function POST(request: Request) {
   if (!sameSecret(request.headers.get("x-telegram-bot-api-secret-token"), process.env.TELEGRAM_WEBHOOK_SECRET)) {
     return Response.json({ error: "Forbidden" }, { status: 403 });
@@ -69,15 +88,28 @@ export async function POST(request: Request) {
     const update = await request.json();
 
     const callback = update.callback_query;
-    if (callback && !callback.from?.is_bot && callback.message?.chat?.type === "private") {
+    if (callback && !callback.from?.is_bot && callback.message?.chat) {
+      const chatType = callback.message.chat.type;
+      const privateChat = chatType === "private";
+      const groupChat = isGroupChat(chatType);
       const chatId = callback.message.chat.id;
-      if (!Number.isSafeInteger(chatId) || chatId <= 0 || chatId !== callback.from.id) return Response.json({ ok: true });
+      const actorTelegramId = callback.from?.id;
+
+      if ((!privateChat && !groupChat) || !Number.isSafeInteger(chatId) || !Number.isSafeInteger(actorTelegramId) || actorTelegramId <= 0) {
+        return Response.json({ ok: true });
+      }
+      if (privateChat && chatId !== actorTelegramId) return Response.json({ ok: true });
+
+      const ctx = await loadJarvisContext(actorTelegramId);
+      if (!ctx) {
+        await telegram("answerCallbackQuery", { callback_query_id: callback.id, text: "Telegram не привязан к NU TEAM" });
+        return Response.json({ ok: true });
+      }
 
       const readMatch = typeof callback.data === "string" ? callback.data.match(/^j:read:(summary|all|critical|people|today)$/) : null;
       if (readMatch) {
-        const ctx = await loadJarvisContext(chatId);
-        if (!ctx) {
-          await telegram("answerCallbackQuery", { callback_query_id: callback.id, text: "Telegram не привязан к NU TEAM" });
+        if (!privateChat) {
+          await telegram("answerCallbackQuery", { callback_query_id: callback.id, text: "Сводки доступны в личном чате с Jarvis" });
           return Response.json({ ok: true });
         }
 
@@ -110,11 +142,21 @@ export async function POST(request: Request) {
 
       const match = typeof callback.data === "string" ? callback.data.match(/^j:(ok|no):([0-9a-f-]{36})$/i) : null;
       if (!match) return Response.json({ ok: true });
-      const ctx = await loadJarvisContext(chatId);
-      if (!ctx) {
-        await telegram("answerCallbackQuery", { callback_query_id: callback.id, text: "Telegram не привязан к NU TEAM" });
-        return Response.json({ ok: true });
+
+      if (groupChat) {
+        const { data: ownedAction } = await ctx.admin
+          .from("telegram_pending_actions")
+          .select("id")
+          .eq("id", match[2])
+          .eq("user_id", ctx.me.id)
+          .eq("chat_id", chatId)
+          .maybeSingle();
+        if (!ownedAction) {
+          await telegram("answerCallbackQuery", { callback_query_id: callback.id, text: "Это подтверждение принадлежит другому сотруднику" });
+          return Response.json({ ok: true });
+        }
       }
+
       let result: string;
       try {
         result = match[1] === "ok" ? await executePendingAction(ctx, chatId, match[2]) : await cancelPendingAction(ctx, chatId, match[2]);
@@ -129,13 +171,23 @@ export async function POST(request: Request) {
     }
 
     const message = update.message;
-    if (!message || message.chat?.type !== "private" || message.from?.is_bot || !Number.isSafeInteger(message.chat?.id) || message.chat.id <= 0 || message.chat.id !== message.from?.id) {
+    const chatType = message?.chat?.type;
+    const privateChat = chatType === "private";
+    const groupChat = isGroupChat(chatType);
+    const chatId = message?.chat?.id;
+    const actorTelegramId = message?.from?.id;
+
+    if (!message || message.from?.is_bot || (!privateChat && !groupChat) || !Number.isSafeInteger(chatId) || !Number.isSafeInteger(actorTelegramId) || actorTelegramId <= 0) {
       return Response.json({ ok: true });
     }
+    if (privateChat && chatId !== actorTelegramId) return Response.json({ ok: true });
 
-    const chatId = message.chat.id as number;
-    const text: string = typeof message.text === "string" ? message.text.trim() : "";
-    const token = text.match(/^\/start(?:@[A-Za-z0-9_]+)? ([A-Za-z0-9_-]{32})$/)?.[1];
+    const rawText: string = typeof message.text === "string" ? message.text.trim() : "";
+    const groupCommand = groupChat ? groupJarvisCommand(rawText) : { explicit: true, text: rawText };
+    if (groupChat && !groupCommand.explicit) return Response.json({ ok: true });
+
+    const text = groupCommand.text;
+    const token = privateChat ? text.match(/^\/start(?:@[A-Za-z0-9_]+)? ([A-Za-z0-9_-]{32})$/)?.[1] : undefined;
 
     if (token) {
       const { data, error } = await adminClient().rpc("nu_telegram_bind", {
@@ -146,38 +198,53 @@ export async function POST(request: Request) {
       return Response.json({ ok: true });
     }
 
-    const ctx = await loadJarvisContext(chatId);
+    const ctx = await loadJarvisContext(actorTelegramId);
     if (!ctx) {
-      await send(chatId, "Открой NU TEAM → Telegram → «Подключить», затем перейди по персональной ссылке. После привязки я смогу читать и управлять твоими задачами.");
+      const messageText = groupChat
+        ? "Сначала подключи свой Telegram к NU TEAM в личном чате с ботом. После этого сможешь ставить задачи отсюда."
+        : "Открой NU TEAM → Telegram → «Подключить», затем перейди по персональной ссылке. После привязки я смогу читать и управлять твоими задачами.";
+      await send(chatId, messageText, groupChat ? { reply_parameters: { message_id: message.message_id, allow_sending_without_reply: true } } : {});
       return Response.json({ ok: true });
     }
 
     if (!text) {
-      await send(chatId, "Пока работаю с текстовыми сообщениями. Напиши «помощь», чтобы посмотреть примеры.");
+      await send(chatId, groupChat
+        ? "Напиши поручение после обращения к Jarvis. Например: «Джарвис, поставь Сергею до пятницы проверить остатки. Результат: таблица по точкам»."
+        : "Пока работаю с текстовыми сообщениями. Напиши «помощь», чтобы посмотреть примеры.",
+      groupChat ? { reply_parameters: { message_id: message.message_id, allow_sending_without_reply: true } } : {});
       return Response.json({ ok: true });
     }
 
-    const executiveReply = renderExecutiveAttention(ctx, text);
-    if (executiveReply) {
-      await send(chatId, executiveReply, { reply_markup: executiveKeyboard() });
-      return Response.json({ ok: true });
+    if (privateChat) {
+      const executiveReply = renderExecutiveAttention(ctx, text);
+      if (executiveReply) {
+        await send(chatId, executiveReply, { reply_markup: executiveKeyboard() });
+        return Response.json({ ok: true });
+      }
     }
 
-    const intent = await interpretJarvis(ctx, normalizeJarvisReadQuery(text));
+    const intent = await interpretJarvis(ctx, privateChat ? normalizeJarvisReadQuery(text) : text);
     const readReply = renderReadIntent(ctx, intent);
     if (readReply) {
-      await send(chatId, readReply);
+      if (groupChat) {
+        await send(chatId, "Управленческие сводки и личные списки задач показываю только в личном чате, чтобы не выкладывать внутренние данные в группу.", {
+          reply_parameters: { message_id: message.message_id, allow_sending_without_reply: true },
+        });
+      } else {
+        await send(chatId, readReply);
+      }
       return Response.json({ ok: true });
     }
 
     const validation = validateWrite(ctx, intent);
     if (validation) {
-      await send(chatId, validation);
+      await send(chatId, validation, groupChat ? { reply_parameters: { message_id: message.message_id, allow_sending_without_reply: true } } : {});
       return Response.json({ ok: true });
     }
 
     const actionId = await savePendingAction(ctx, chatId, intent);
     await send(chatId, renderProposal(ctx, intent), {
+      ...(groupChat ? { reply_parameters: { message_id: message.message_id, allow_sending_without_reply: true } } : {}),
       reply_markup: {
         inline_keyboard: [[
           { text: "✅ Подтвердить", callback_data: `j:ok:${actionId}` },
