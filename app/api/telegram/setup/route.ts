@@ -1,4 +1,4 @@
-import { activeUser, appUrl, telegram } from "../../../lib/server/telegram";
+import { activeUser, appUrl, telegram, TelegramError } from "../../../lib/server/telegram";
 
 export const runtime = "nodejs";
 export async function POST(request: Request) {
@@ -6,19 +6,53 @@ export async function POST(request: Request) {
     const user = await activeUser(request);
     if (!user) return Response.json({ error: "Требуется вход" }, { status: 401 });
     if (user.role !== "owner") return Response.json({ error: "Доступ запрещён" }, { status: 403 });
+
     const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
-    if (!secret || !/^[A-Za-z0-9_-]{32,256}$/.test(secret)) return Response.json({ error: "Добавьте TELEGRAM_WEBHOOK_SECRET в переменные окружения (32–256 букв, цифр, _ или -)" }, { status: 503 });
+    if (!secret || !/^[A-Za-z0-9_-]{32,256}$/.test(secret)) {
+      return Response.json(
+        { error: "TELEGRAM_WEBHOOK_SECRET отсутствует или имеет неверный формат. Нужны 32–256 символов: буквы, цифры, _ или -." },
+        { status: 503 },
+      );
+    }
+
+    if (!process.env.TELEGRAM_BOT_TOKEN) {
+      return Response.json({ error: "TELEGRAM_BOT_TOKEN отсутствует в окружении приложения." }, { status: 503 });
+    }
+
     const deployEnv = process.env.NU_ENV || process.env.VERCEL_ENV;
-    if (deployEnv && deployEnv !== "production") return Response.json({ error: "Подключение бота выполняется в основной версии" }, { status: 403 });
+    if (deployEnv && deployEnv !== "production") {
+      return Response.json({ error: "Подключение бота выполняется в основной версии" }, { status: 403 });
+    }
+
     await telegram("setWebhook", {
       url: `${appUrl()}/api/telegram/webhook`,
       secret_token: secret,
       allowed_updates: ["message", "callback_query"],
       max_connections: 2,
     });
+
     const info = await telegram("getMe", {});
     return Response.json({ ok: true, username: info.username });
-  } catch {
-    return Response.json({ error: "Не удалось настроить бота. Проверьте переменные Telegram в окружении приложения." }, { status: 503 });
+  } catch (error) {
+    if (error instanceof TelegramError) {
+      const message = error.code === 401
+        ? "Telegram отклонил TELEGRAM_BOT_TOKEN. Возьмите актуальный API Token у @BotFather и замените TELEGRAM_BOT_TOKEN в Timeweb."
+        : `Telegram API вернул ошибку ${error.code}. Проверьте TELEGRAM_BOT_TOKEN и APP_URL.`;
+      return Response.json({ error: message, telegramCode: error.code }, { status: 503 });
+    }
+
+    if (error instanceof Error) {
+      if (error.message === "Telegram configuration missing") {
+        return Response.json({ error: "TELEGRAM_BOT_TOKEN отсутствует или содержит пробелы." }, { status: 503 });
+      }
+      if (error.message === "APP_URL must use HTTPS") {
+        return Response.json({ error: "APP_URL должен начинаться с https://" }, { status: 503 });
+      }
+      if (error.message === "Supabase server configuration missing") {
+        return Response.json({ error: "Ошибка серверной конфигурации Supabase." }, { status: 503 });
+      }
+    }
+
+    return Response.json({ error: "Не удалось настроить бота. Откройте логи приложения Timeweb для подробностей." }, { status: 503 });
   }
 }
