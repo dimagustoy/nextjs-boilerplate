@@ -1,34 +1,17 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import "./network.css";
+import NetworkDirectory from "./NetworkDirectory";
 
 export const metadata: Metadata = {
-  title: "Не Усложняй — рабочее пространство",
-  description: "Задачи, сроки и команда сети Не Усложняй",
+  title: "Не Усложняй — места, люди, истории",
+  description: "Сеть «Не Усложняй»: 15 заведений в 11 городах. Найди своё место, узнай, что происходит в NU, или открой «Не Усложняй» в своём городе.",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html
-      lang="ru"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="ru">
+      <body>{children}<NetworkDirectory /></body>
     </html>
   );
 }
-
