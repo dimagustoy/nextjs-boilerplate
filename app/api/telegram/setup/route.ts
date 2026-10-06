@@ -34,6 +34,11 @@ export async function POST(request: Request) {
     const info = await telegram("getMe", {});
     return Response.json({ ok: true, username: info.username });
   } catch (error) {
+    const diagnostic = error instanceof Error
+      ? { name: error.name, message: error.message }
+      : { name: "UnknownError", message: String(error) };
+    console.error("[telegram/setup] failed", diagnostic);
+
     if (error instanceof TelegramError) {
       const message = error.code === 401
         ? "Telegram отклонил TELEGRAM_BOT_TOKEN. Возьмите актуальный API Token у @BotFather и замените TELEGRAM_BOT_TOKEN в Timeweb."
@@ -51,8 +56,14 @@ export async function POST(request: Request) {
       if (error.message === "Supabase server configuration missing") {
         return Response.json({ error: "Ошибка серверной конфигурации Supabase." }, { status: 503 });
       }
+      if (error.name === "TimeoutError" || error.message.toLowerCase().includes("fetch failed")) {
+        return Response.json({ error: "Timeweb не смог связаться с API Telegram. Откройте логи приложения: там будет точная сетевая ошибка." }, { status: 503 });
+      }
+      if (error.message.startsWith("Invalid URL")) {
+        return Response.json({ error: "APP_URL имеет неверный формат." }, { status: 503 });
+      }
     }
 
-    return Response.json({ error: "Не удалось настроить бота. Откройте логи приложения Timeweb для подробностей." }, { status: 503 });
+    return Response.json({ error: "Не удалось настроить бота. Откройте логи приложения Timeweb и найдите строку [telegram/setup] failed." }, { status: 503 });
   }
 }
