@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import "./network.css";
 import "./place-details.css";
+import "./visual-v2.css";
 import NetworkDirectory from "./NetworkDirectory";
 import JournalSourceLinks from "./JournalSourceLinks";
 
