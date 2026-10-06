@@ -3,6 +3,7 @@ import "./globals.css";
 import "./network.css";
 import "./place-details.css";
 import "./visual-v2.css";
+import "./atmosphere-v3.css";
 import JournalSourceLinks from "./JournalSourceLinks";
 
 export const metadata: Metadata = {
