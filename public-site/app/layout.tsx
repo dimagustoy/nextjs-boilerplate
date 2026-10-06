@@ -7,7 +7,7 @@ import JournalSourceLinks from "./JournalSourceLinks";
 
 export const metadata: Metadata = {
   title: "Не Усложняй — места, люди, истории",
-  description: "Сеть «Не Усложняй»: 15 заведений в 11 городах. Найди своё место, узнай, что происходит в NU, или открой «Не Усложняй» в своём городе.",
+  description: "Сеть «Не Усложняй»: места, люди, события и истории бренда. Найди свой NU или открой «Не Усложняй» в своём городе.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
