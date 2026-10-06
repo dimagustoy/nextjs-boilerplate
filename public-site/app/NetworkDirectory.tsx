@@ -19,14 +19,49 @@ type Place = {
   opening_hours?: string[] | null;
 };
 
+const fallbackPlaces: Place[] = [
+  { slug: "turgeneva-22", city: "Екатеринбург", name: "Тургенева, 22", address: "ул. Тургенева, 22" },
+  { slug: "tatischeva-47a", city: "Екатеринбург", name: "Татищева, 47А", address: "ул. Татищева, 47А" },
+  { slug: "chkalova-258", city: "Екатеринбург", name: "Чкалова, 258", address: "ул. Чкалова, 258" },
+  { slug: "gagarin", city: "Екатеринбург", name: "Гагарин", address: "Белоглазова, 2Г" },
+];
+
+const knownPositions: Record<string, { x: number; y: number }> = {
+  "Петрозаводск": { x: 28, y: 34 },
+  "Санкт-Петербург": { x: 24, y: 37 },
+  "Москва": { x: 30, y: 49 },
+  "Казань": { x: 39, y: 52 },
+  "Самара": { x: 40, y: 60 },
+  "Уфа": { x: 46, y: 57 },
+  "Пермь": { x: 48, y: 48 },
+  "Екатеринбург": { x: 53, y: 53 },
+  "Челябинск": { x: 53, y: 61 },
+  "Тюмень": { x: 58, y: 55 },
+  "Омск": { x: 64, y: 61 },
+  "Новосибирск": { x: 71, y: 62 },
+  "Красноярск": { x: 77, y: 55 },
+  "Иркутск": { x: 83, y: 62 },
+  "Сочи": { x: 27, y: 72 },
+  "Краснодар": { x: 25, y: 66 },
+};
+
+function pluralPlaces(value: number) {
+  const last = value % 10;
+  const lastTwo = value % 100;
+  if (last === 1 && lastTwo !== 11) return "место";
+  if (last >= 2 && last <= 4 && (lastTwo < 12 || lastTwo > 14)) return "места";
+  return "мест";
+}
+
 export default function NetworkDirectory() {
   const [mount, setMount] = useState<HTMLElement | null>(null);
-  const [places, setPlaces] = useState<Place[]>([]);
-  const [city, setCity] = useState("Все");
+  const [places, setPlaces] = useState<Place[]>(fallbackPlaces);
+  const [city, setCity] = useState("Екатеринбург");
 
   useEffect(() => {
     const anchor = document.querySelector<HTMLElement>("#places");
     if (!anchor) return;
+
     let host = document.getElementById("all-places");
     if (!host) {
       host = document.createElement("section");
@@ -34,52 +69,142 @@ export default function NetworkDirectory() {
       host.className = "section all-places";
       anchor.insertAdjacentElement("afterend", host);
     }
+
     setMount(host);
-    if (window.location.hash === "#all-places") requestAnimationFrame(() => host?.scrollIntoView({ behavior: "smooth" }));
+    if (window.location.hash === "#all-places") {
+      requestAnimationFrame(() => host?.scrollIntoView({ behavior: "smooth" }));
+    }
   }, []);
 
   useEffect(() => {
     fetch("/api/content", { cache: "no-store" })
-      .then((response) => response.ok ? response.json() : Promise.reject())
-      .then((data) => setPlaces(Array.isArray(data.locations) ? data.locations : []))
-      .catch(() => setPlaces([]));
+      .then((response) => (response.ok ? response.json() : Promise.reject()))
+      .then((data) => {
+        if (Array.isArray(data.locations) && data.locations.length) {
+          setPlaces(data.locations);
+          const cities = Array.from(new Set<string>(data.locations.map((place: Place) => place.city).filter(Boolean)));
+          setCity((current) => (cities.includes(current) ? current : cities[0] || "Екатеринбург"));
+        }
+      })
+      .catch(() => undefined);
   }, []);
 
-  const cities = useMemo(() => ["Все", ...Array.from(new Set(places.map((place) => place.city)))], [places]);
-  const visible = useMemo(() => city === "Все" ? places : places.filter((place) => place.city === city), [places, city]);
+  const grouped = useMemo(() => {
+    const map = new Map<string, Place[]>();
+    for (const place of places) {
+      const key = place.city || "Другой город";
+      map.set(key, [...(map.get(key) || []), place]);
+    }
+    return Array.from(map.entries())
+      .map(([name, items]) => ({ name, count: items.length, items }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "ru"));
+  }, [places]);
+
+  const visible = useMemo(() => places.filter((place) => place.city === city), [places, city]);
+
+  const points = useMemo(() => {
+    return grouped.map((group, index) => {
+      const known = knownPositions[group.name];
+      if (known) return { ...group, ...known };
+      const column = index % 5;
+      const row = Math.floor(index / 5);
+      return {
+        ...group,
+        x: 38 + column * 10,
+        y: 34 + row * 16 + (column % 2) * 5,
+      };
+    });
+  }, [grouped]);
 
   if (!mount) return null;
 
   return createPortal(
     <>
       <div className="section-head all-places-head">
-        <div><p className="eyebrow">Вся сеть</p><h2>15 МЕСТ.<br />11 ГОРОДОВ.</h2></div>
-        <p className="section-intro">Выбирай город, смотри реальные фотографии и сразу звони или строй маршрут. Бронирование — по телефону выбранного заведения.</p>
+        <div>
+          <p className="eyebrow">Вся сеть</p>
+          <h2>15 МЕСТ.<br />11 ГОРОДОВ.</h2>
+        </div>
+        <p className="section-intro">Выбирай город на карте, смотри пространство и сразу решай, куда сегодня. Никаких таблиц адресов из 2007 года.</p>
       </div>
 
-      <div className="city-filters" aria-label="Фильтр заведений по городу">
-        {cities.map((item) => (
-          <button key={item} className={city === item ? "city-chip active" : "city-chip"} onClick={() => setCity(item)}>{item}</button>
-        ))}
+      <div className="network-map-shell">
+        <aside className="network-map-sidebar">
+          <div className="network-map-kicker">РОССИЯ</div>
+          <h3>Мы уже здесь.</h3>
+          <p>И продолжаем появляться в новых городах.</p>
+
+          <div className="network-city-list" aria-label="Выбор города">
+            {grouped.map((group) => (
+              <button
+                key={group.name}
+                type="button"
+                className={city === group.name ? "active" : ""}
+                onClick={() => setCity(group.name)}
+              >
+                <span>{group.name}</span>
+                <b>{String(group.count).padStart(2, "0")}</b>
+              </button>
+            ))}
+          </div>
+        </aside>
+
+        <div className="network-map-visual" aria-label="Карта присутствия Не Усложняй">
+          <div className="network-map-glow" />
+          <div className="network-russia-shape" />
+          <div className="network-map-caption">НЕ УСЛОЖНЯЙ · РОССИЯ</div>
+
+          {points.map((point) => (
+            <button
+              key={point.name}
+              type="button"
+              className={city === point.name ? "network-map-point selected" : "network-map-point"}
+              style={{ left: `${point.x}%`, top: `${point.y}%` }}
+              onClick={() => setCity(point.name)}
+              aria-label={`${point.name}: ${point.count} ${pluralPlaces(point.count)}`}
+            >
+              <span className="network-point-dot" />
+              <span className="network-point-label">{point.name}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="selected-city-head">
+        <div>
+          <p className="eyebrow">Выбранный город</p>
+          <h3>{city}</h3>
+        </div>
+        <span>{visible.length} {pluralPlaces(visible.length)}</span>
       </div>
 
       <div className="all-places-grid">
         {visible.map((place) => (
           <article className="network-card" key={place.slug}>
             <a className="network-card-image" href={`/places/${place.slug}`}>
-              {place.hero_image_url ? <img src={place.hero_image_url} alt={`${place.city}, ${place.name}`} loading="lazy" /> : <div className="network-image-placeholder">NU</div>}
-              <span>{place.city}</span>
+              {place.hero_image_url ? (
+                <img src={place.hero_image_url} alt={`${place.city}, ${place.name}`} loading="lazy" />
+              ) : (
+                <div className="network-image-placeholder"><span>NU</span><small>ФОТО СКОРО</small></div>
+              )}
+              <span className="network-card-badge">НЕ УСЛОЖНЯЙ</span>
             </a>
+
             <div className="network-card-body">
               <div className="network-card-title">
-                <div><p>{place.city}</p><h3>{place.name}</h3></div>
+                <div>
+                  <p>{place.city}</p>
+                  <h3>{place.name}</h3>
+                </div>
                 <div className="network-ratings">
                   {place.rating_2gis != null && <span><b>{Number(place.rating_2gis).toFixed(1)}</b> 2ГИС</span>}
                   {place.rating_yandex != null && <span><b>{Number(place.rating_yandex).toFixed(1)}</b> Яндекс</span>}
                 </div>
               </div>
-              <p className="network-address">{place.address}</p>
-              {Array.isArray(place.opening_hours) && place.opening_hours.length > 0 && <div className="network-hours">{place.opening_hours.map((hours) => <span key={hours}>{hours}</span>)}</div>}
+
+              <p className="network-address">{place.address || "Адрес добавляем"}</p>
+              {place.short_description && <p className="network-description">{place.short_description}</p>}
+
               <div className="network-card-actions">
                 <a className="network-primary" href={`/places/${place.slug}`}>Смотреть место →</a>
                 {place.phone && <a href={`tel:${place.phone.replace(/[^+\d]/g, "")}`}>Позвонить</a>}
@@ -89,6 +214,14 @@ export default function NetworkDirectory() {
             </div>
           </article>
         ))}
+      </div>
+
+      <div className="network-franchise-bridge">
+        <div>
+          <span>СЕТЬ РАСТЁТ</span>
+          <h3>Следующая точка на карте<br />может быть твоей.</h3>
+        </div>
+        <a href="#franchise">Открыть Не Усложняй →</a>
       </div>
     </>,
     mount,
