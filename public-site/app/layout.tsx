@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./network.css";
+import NetworkDirectory from "./NetworkDirectory";
 
 export const metadata: Metadata = {
   title: "Не Усложняй — места, люди, истории",
@@ -9,7 +11,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="ru">
-      <body>{children}</body>
+      <body>{children}<NetworkDirectory /></body>
     </html>
   );
 }
