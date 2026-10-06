@@ -1,4 +1,5 @@
 import { adminClient, sameSecret, telegram, tokenHash } from "../../../lib/server/telegram";
+import { renderExecutiveAttention } from "../../../lib/server/jarvis-executive";
 import {
   cancelPendingAction,
   executePendingAction,
@@ -101,6 +102,12 @@ export async function POST(request: Request) {
 
     if (!text) {
       await send(chatId, "Пока работаю с текстовыми сообщениями. Напиши «помощь», чтобы посмотреть примеры.");
+      return Response.json({ ok: true });
+    }
+
+    const executiveReply = renderExecutiveAttention(ctx, text);
+    if (executiveReply) {
+      await send(chatId, executiveReply);
       return Response.json({ ok: true });
     }
 
