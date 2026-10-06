@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./network.css";
+import "./place-details.css";
 import NetworkDirectory from "./NetworkDirectory";
 
 export const metadata: Metadata = {
