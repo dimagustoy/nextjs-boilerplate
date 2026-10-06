@@ -60,6 +60,15 @@ function normalizeJarvisReadQuery(text: string) {
   return text;
 }
 
+function normalizeSelfAssignment(text: string, fullName: string) {
+  const isWrite = /(постав|создай|поручи|назнач|добав|задач|нужно|надо)/i.test(text);
+  if (!isWrite) return text;
+  return text
+    .replace(/\bпоставь\s+мне\b/gi, `Поставь ${fullName}`)
+    .replace(/\b(?:назначь|поручи)\s+мне\b/gi, match => `${match.split(/\s+/)[0]} ${fullName}`)
+    .replace(/\b(?:мне|себе|на\s+меня|для\s+меня)\b/gi, fullName);
+}
+
 function groupJarvisCommand(text: string) {
   const source = text.trim();
   const patterns = [
@@ -239,7 +248,8 @@ export async function POST(request: Request) {
       }
     }
 
-    const interpretedText = groupChat ? replyTaskContext(message, text) : normalizeJarvisReadQuery(text);
+    const baseText = groupChat ? replyTaskContext(message, text) : normalizeJarvisReadQuery(text);
+    const interpretedText = normalizeSelfAssignment(baseText, ctx.me.full_name);
     const intent = await interpretJarvis(ctx, interpretedText);
     const readReply = renderReadIntent(ctx, intent);
     if (readReply) {
