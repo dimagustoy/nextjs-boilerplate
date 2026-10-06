@@ -64,9 +64,12 @@ function normalizeSelfAssignment(text: string, fullName: string) {
   const isWrite = /(постав|создай|поручи|назнач|добав|задач|нужно|надо)/i.test(text);
   if (!isWrite) return text;
   return text
-    .replace(/\bпоставь\s+мне\b/gi, `Поставь ${fullName}`)
-    .replace(/\b(?:назначь|поручи)\s+мне\b/gi, match => `${match.split(/\s+/)[0]} ${fullName}`)
-    .replace(/\b(?:мне|себе|на\s+меня|для\s+меня)\b/gi, fullName);
+    .replace(/поставь\s+мне/gi, `Поставь ${fullName}`)
+    .replace(/(назначь|поручи)\s+мне/gi, `$1 ${fullName}`)
+    .replace(/(^|[\s,.:;!?])на\s+меня(?=$|[\s,.:;!?])/gi, `$1${fullName}`)
+    .replace(/(^|[\s,.:;!?])для\s+меня(?=$|[\s,.:;!?])/gi, `$1${fullName}`)
+    .replace(/(^|[\s,.:;!?])себе(?=$|[\s,.:;!?])/gi, `$1${fullName}`)
+    .replace(/(^|[\s,.:;!?])мне(?=$|[\s,.:;!?])/gi, `$1${fullName}`);
 }
 
 function groupJarvisCommand(text: string) {
