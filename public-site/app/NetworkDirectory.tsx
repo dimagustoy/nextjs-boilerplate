@@ -53,6 +53,7 @@ function PlaceCard({ place }: { place: Place }) {
 
 export default function NetworkDirectory() {
   const [places, setPlaces] = useState<Place[]>(fallbackPlaces);
+  const [selectedCity, setSelectedCity] = useState("Екатеринбург");
   const [cmsReady, setCmsReady] = useState(false);
 
   useEffect(() => {
@@ -60,8 +61,18 @@ export default function NetworkDirectory() {
       .then((response) => (response.ok ? response.json() : Promise.reject()))
       .then((data) => {
         if (Array.isArray(data.locations) && data.locations.length) {
-          setPlaces(data.locations as Place[]);
+          const livePlaces = data.locations as Place[];
+          setPlaces(livePlaces);
           setCmsReady(true);
+
+          const liveCities = Array.from(new Set(livePlaces.map((place) => place.city).filter(Boolean)))
+            .sort((a, b) => a.localeCompare(b, "ru"));
+
+          setSelectedCity((current) => {
+            if (liveCities.includes(current)) return current;
+            if (liveCities.includes("Екатеринбург")) return "Екатеринбург";
+            return liveCities[0] || current;
+          });
         }
       })
       .catch(() => undefined);
@@ -76,12 +87,13 @@ export default function NetworkDirectory() {
 
     return Array.from(map.entries())
       .map(([name, items]) => ({ name, count: items.length, items }))
-      .sort((a, b) => {
-        if (a.name === "Екатеринбург") return -1;
-        if (b.name === "Екатеринбург") return 1;
-        return b.count - a.count || a.name.localeCompare(b.name, "ru");
-      });
+      .sort((a, b) => a.name.localeCompare(b.name, "ru"));
   }, [places]);
+
+  const selectedGroup = useMemo(
+    () => grouped.find((group) => group.name === selectedCity) || grouped[0],
+    [grouped, selectedCity],
+  );
 
   return (
     <section id="all-places" className="section all-places" aria-label="Заведения Не Усложняй">
@@ -107,36 +119,40 @@ export default function NetworkDirectory() {
 
         <div className="network-city-grid" aria-label="Выбор города">
           {grouped.map((group, index) => (
-            <a key={group.name} href={`#network-city-${index + 1}`}>
+            <button
+              key={group.name}
+              type="button"
+              className={group.name === selectedGroup?.name ? "active" : ""}
+              aria-pressed={group.name === selectedGroup?.name}
+              onClick={() => setSelectedCity(group.name)}
+            >
               <span className="network-city-index">{String(index + 1).padStart(2, "0")}</span>
               <span className="network-city-name">{group.name}</span>
               <span className="network-city-count">{group.count} {pluralPlaces(group.count)}</span>
               <span className="network-city-arrow">↘</span>
-            </a>
+            </button>
           ))}
         </div>
       </div>
 
-      <div className="network-city-sections">
-        {grouped.map((group, index) => (
-          <section className="network-city-section" id={`network-city-${index + 1}`} key={group.name}>
-            <div className="selected-city-head">
-              <div>
-                <p className="eyebrow">Город {String(index + 1).padStart(2, "0")}</p>
-                <h3>{group.name}</h3>
-              </div>
-              <div className="selected-city-meta">
-                <span>{group.count} {pluralPlaces(group.count)}</span>
-                <small>Фото · телефон · рейтинг · маршрут</small>
-              </div>
+      {selectedGroup && (
+        <div className="network-selected-city" key={selectedGroup.name}>
+          <div className="selected-city-head">
+            <div>
+              <p className="eyebrow">Выбранный город</p>
+              <h3>{selectedGroup.name}</h3>
             </div>
+            <div className="selected-city-meta">
+              <span>{selectedGroup.count} {pluralPlaces(selectedGroup.count)}</span>
+              <small>Фото · телефон · рейтинг · маршрут</small>
+            </div>
+          </div>
 
-            <div className="all-places-grid">
-              {group.items.map((place) => <PlaceCard place={place} key={place.slug} />)}
-            </div>
-          </section>
-        ))}
-      </div>
+          <div className="all-places-grid">
+            {selectedGroup.items.map((place) => <PlaceCard place={place} key={place.slug} />)}
+          </div>
+        </div>
+      )}
 
       <div className="network-franchise-bridge">
         <div>
