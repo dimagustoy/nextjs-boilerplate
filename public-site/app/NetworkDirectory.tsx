@@ -53,7 +53,6 @@ function PlaceCard({ place }: { place: Place }) {
 
 export default function NetworkDirectory() {
   const [places, setPlaces] = useState<Place[]>(fallbackPlaces);
-  const [selectedCity, setSelectedCity] = useState("Екатеринбург");
   const [cmsReady, setCmsReady] = useState(false);
 
   useEffect(() => {
@@ -61,18 +60,8 @@ export default function NetworkDirectory() {
       .then((response) => (response.ok ? response.json() : Promise.reject()))
       .then((data) => {
         if (Array.isArray(data.locations) && data.locations.length) {
-          const livePlaces = data.locations as Place[];
-          setPlaces(livePlaces);
+          setPlaces(data.locations as Place[]);
           setCmsReady(true);
-
-          const liveCities = Array.from(new Set(livePlaces.map((place) => place.city).filter(Boolean)))
-            .sort((a, b) => a.localeCompare(b, "ru"));
-
-          setSelectedCity((current) => {
-            if (liveCities.includes(current)) return current;
-            if (liveCities.includes("Екатеринбург")) return "Екатеринбург";
-            return liveCities[0] || current;
-          });
         }
       })
       .catch(() => undefined);
@@ -90,10 +79,20 @@ export default function NetworkDirectory() {
       .sort((a, b) => a.name.localeCompare(b.name, "ru"));
   }, [places]);
 
-  const selectedGroup = useMemo(
-    () => grouped.find((group) => group.name === selectedCity) || grouped[0],
-    [grouped, selectedCity],
-  );
+  const defaultCity = grouped.some((group) => group.name === "Екатеринбург")
+    ? "Екатеринбург"
+    : grouped[0]?.name;
+
+  const nativeSwitcherCss = grouped.map((group, index) => {
+    const id = `network-city-choice-${index}`;
+    return `
+#${id}:checked ~ .network-city-grid label[for="${id}"]{background:#f08a00;color:#111}
+#${id}:checked ~ .network-city-grid label[for="${id}"] .network-city-index{color:rgba(17,17,17,.52)}
+#${id}:checked ~ .network-city-grid label[for="${id}"] .network-city-count{color:rgba(17,17,17,.62)}
+#${id}:checked ~ .network-city-grid label[for="${id}"] .network-city-arrow{color:#111}
+#${id}:checked ~ .network-city-panels [data-city-panel="${index}"]{display:block}
+`;
+  }).join("\n");
 
   return (
     <section id="all-places" className="section all-places" aria-label="Заведения Не Усложняй">
@@ -117,42 +116,60 @@ export default function NetworkDirectory() {
           <p>{grouped.length} городов · {places.length} {pluralPlaces(places.length)}</p>
         </div>
 
-        <div className="network-city-grid" aria-label="Выбор города">
-          {grouped.map((group, index) => (
-            <button
-              key={group.name}
-              type="button"
-              className={group.name === selectedGroup?.name ? "active" : ""}
-              aria-pressed={group.name === selectedGroup?.name}
-              onClick={() => setSelectedCity(group.name)}
-            >
-              <span className="network-city-index">{String(index + 1).padStart(2, "0")}</span>
-              <span className="network-city-name">{group.name}</span>
-              <span className="network-city-count">{group.count} {pluralPlaces(group.count)}</span>
-              <span className="network-city-arrow">↘</span>
-            </button>
-          ))}
+        <div className="network-city-switcher">
+          {grouped.map((group, index) => {
+            const id = `network-city-choice-${index}`;
+            return (
+              <input
+                key={id}
+                className="network-city-radio"
+                id={id}
+                type="radio"
+                name="network-city"
+                defaultChecked={group.name === defaultCity}
+                aria-label={`Показать заведения: ${group.name}`}
+              />
+            );
+          })}
+
+          <div className="network-city-grid" aria-label="Выбор города">
+            {grouped.map((group, index) => {
+              const id = `network-city-choice-${index}`;
+              return (
+                <label key={group.name} htmlFor={id}>
+                  <span className="network-city-index">{String(index + 1).padStart(2, "0")}</span>
+                  <span className="network-city-name">{group.name}</span>
+                  <span className="network-city-count">{group.count} {pluralPlaces(group.count)}</span>
+                  <span className="network-city-arrow">↘</span>
+                </label>
+              );
+            })}
+          </div>
+
+          <div className="network-city-panels">
+            {grouped.map((group, index) => (
+              <div className="network-city-panel" data-city-panel={index} key={group.name}>
+                <div className="selected-city-head">
+                  <div>
+                    <p className="eyebrow">Выбранный город</p>
+                    <h3>{group.name}</h3>
+                  </div>
+                  <div className="selected-city-meta">
+                    <span>{group.count} {pluralPlaces(group.count)}</span>
+                    <small>Фото · телефон · рейтинг · маршрут</small>
+                  </div>
+                </div>
+
+                <div className="all-places-grid">
+                  {group.items.map((place) => <PlaceCard place={place} key={place.slug} />)}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <style>{nativeSwitcherCss}</style>
         </div>
       </div>
-
-      {selectedGroup && (
-        <div className="network-selected-city" key={selectedGroup.name}>
-          <div className="selected-city-head">
-            <div>
-              <p className="eyebrow">Выбранный город</p>
-              <h3>{selectedGroup.name}</h3>
-            </div>
-            <div className="selected-city-meta">
-              <span>{selectedGroup.count} {pluralPlaces(selectedGroup.count)}</span>
-              <small>Фото · телефон · рейтинг · маршрут</small>
-            </div>
-          </div>
-
-          <div className="all-places-grid">
-            {selectedGroup.items.map((place) => <PlaceCard place={place} key={place.slug} />)}
-          </div>
-        </div>
-      )}
 
       <div className="network-franchise-bridge">
         <div>
