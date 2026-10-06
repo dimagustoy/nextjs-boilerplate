@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { createPortal } from "react-dom";
 
 type Place = {
   id?: string;
@@ -49,16 +48,9 @@ function pluralPlaces(value: number) {
 }
 
 export default function NetworkDirectory() {
-  const [mount, setMount] = useState<HTMLElement | null>(null);
   const [places, setPlaces] = useState<Place[]>(fallbackPlaces);
   const [city, setCity] = useState("Екатеринбург");
   const [cmsReady, setCmsReady] = useState(false);
-
-  useEffect(() => {
-    const host = document.getElementById("all-places");
-    if (!host) return;
-    setMount(host);
-  }, []);
 
   useEffect(() => {
     fetch("/api/content", { cache: "no-store" })
@@ -98,10 +90,8 @@ export default function NetworkDirectory() {
 
   const visible = useMemo(() => places.filter((place) => place.city === city), [places, city]);
 
-  if (!mount) return null;
-
-  return createPortal(
-    <>
+  return (
+    <section id="all-places" className="section all-places" aria-label="Заведения Не Усложняй">
       <div className="section-head all-places-head">
         <div>
           <p className="eyebrow">Вся сеть</p>
@@ -109,7 +99,7 @@ export default function NetworkDirectory() {
         </div>
         <div className="network-head-copy">
           <p className="section-intro">Выбирай город, смотри пространство и сразу строй маршрут. Список заведений живёт в NU OS и обновляется вместе с сетью.</p>
-          <span>{cmsReady ? "Актуальные данные из NU OS" : "Показываем резервный список, пока NU OS загружается"}</span>
+          <span>{cmsReady ? "Актуальные данные из NU OS" : "Города доступны сразу, данные заведений подключаются из NU OS"}</span>
         </div>
       </div>
 
@@ -119,7 +109,7 @@ export default function NetworkDirectory() {
             <span>Города сети</span>
             <strong>Выбери свой</strong>
           </div>
-          <p>{cmsReady ? `${grouped.length} городов · ${places.length} ${pluralPlaces(places.length)}` : "Города доступны сразу"}</p>
+          <p>{cmsReady ? `${grouped.length} городов · ${places.length} ${pluralPlaces(places.length)}` : `${grouped.length} городов`}</p>
         </div>
 
         <div className="network-city-grid" aria-label="Выбор города">
@@ -132,7 +122,7 @@ export default function NetworkDirectory() {
             >
               <span className="network-city-index">{String(index + 1).padStart(2, "0")}</span>
               <span className="network-city-name">{group.name}</span>
-              <span className="network-city-count">{group.count > 0 ? `${group.count} ${pluralPlaces(group.count)}` : "данные загружаются"}</span>
+              <span className="network-city-count">{group.count > 0 ? `${group.count} ${pluralPlaces(group.count)}` : "открыть город"}</span>
               <span className="network-city-arrow">↘</span>
             </button>
           ))}
@@ -145,7 +135,7 @@ export default function NetworkDirectory() {
           <h3>{city}</h3>
         </div>
         <div className="selected-city-meta">
-          <span>{visible.length > 0 ? `${visible.length} ${pluralPlaces(visible.length)}` : "контакты загружаются"}</span>
+          <span>{visible.length > 0 ? `${visible.length} ${pluralPlaces(visible.length)}` : "контакты подключаются"}</span>
           <small>Фото · рейтинг · маршрут</small>
         </div>
       </div>
@@ -191,8 +181,8 @@ export default function NetworkDirectory() {
       ) : (
         <div className="network-empty-state">
           <span>NU · {city}</span>
-          <h3>Заведение есть в списке сети.<br />Контакты подтягиваются из NU OS.</h3>
-          <p>Как только CMS отвечает, здесь автоматически появятся фото, адрес, телефон, рейтинги и маршруты.</p>
+          <h3>Город уже в сети.<br />Карточка заведения подключается.</h3>
+          <p>После ответа NU OS здесь появятся фото, адрес, телефон, рейтинги и маршруты. Сам город при этом всегда остаётся доступен на странице.</p>
         </div>
       )}
 
@@ -203,7 +193,6 @@ export default function NetworkDirectory() {
         </div>
         <a href="#franchise">Открыть Не Усложняй →</a>
       </div>
-    </>,
-    mount,
+    </section>
   );
 }
