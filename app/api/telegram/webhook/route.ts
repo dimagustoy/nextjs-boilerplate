@@ -60,6 +60,18 @@ function normalizeJarvisReadQuery(text: string) {
   return text;
 }
 
+function normalizeSelfAssignment(text: string, fullName: string) {
+  const isWrite = /(постав|создай|поручи|назнач|добав|задач|нужно|надо)/i.test(text);
+  if (!isWrite) return text;
+  return text
+    .replace(/поставь\s+мне/gi, `Поставь ${fullName}`)
+    .replace(/(назначь|поручи)\s+мне/gi, `$1 ${fullName}`)
+    .replace(/(^|[\s,.:;!?])на\s+меня(?=$|[\s,.:;!?])/gi, `$1${fullName}`)
+    .replace(/(^|[\s,.:;!?])для\s+меня(?=$|[\s,.:;!?])/gi, `$1${fullName}`)
+    .replace(/(^|[\s,.:;!?])себе(?=$|[\s,.:;!?])/gi, `$1${fullName}`)
+    .replace(/(^|[\s,.:;!?])мне(?=$|[\s,.:;!?])/gi, `$1${fullName}`);
+}
+
 function groupJarvisCommand(text: string) {
   const source = text.trim();
   const patterns = [
@@ -239,7 +251,8 @@ export async function POST(request: Request) {
       }
     }
 
-    const interpretedText = groupChat ? replyTaskContext(message, text) : normalizeJarvisReadQuery(text);
+    const baseText = groupChat ? replyTaskContext(message, text) : normalizeJarvisReadQuery(text);
+    const interpretedText = normalizeSelfAssignment(baseText, ctx.me.full_name);
     const intent = await interpretJarvis(ctx, interpretedText);
     const readReply = renderReadIntent(ctx, intent);
     if (readReply) {
