@@ -18,6 +18,22 @@ async function send(chatId: number, text: string, extra: Record<string, unknown>
   return telegram("sendMessage", { chat_id: chatId, text, ...extra });
 }
 
+function executiveKeyboard() {
+  return {
+    inline_keyboard: [
+      [
+        { text: "🔴 Все", callback_data: "j:read:all" },
+        { text: "⚠️ Критичные", callback_data: "j:read:critical" },
+      ],
+      [
+        { text: "👥 По сотрудникам", callback_data: "j:read:people" },
+        { text: "📅 Мои сегодня", callback_data: "j:read:today" },
+      ],
+      [{ text: "🔥 Сводка", callback_data: "j:read:summary" }],
+    ],
+  };
+}
+
 function normalizeJarvisReadQuery(text: string) {
   const n = text
     .toLocaleLowerCase("ru")
@@ -56,6 +72,42 @@ export async function POST(request: Request) {
     if (callback && !callback.from?.is_bot && callback.message?.chat?.type === "private") {
       const chatId = callback.message.chat.id;
       if (!Number.isSafeInteger(chatId) || chatId <= 0 || chatId !== callback.from.id) return Response.json({ ok: true });
+
+      const readMatch = typeof callback.data === "string" ? callback.data.match(/^j:read:(summary|all|critical|people|today)$/) : null;
+      if (readMatch) {
+        const ctx = await loadJarvisContext(chatId);
+        if (!ctx) {
+          await telegram("answerCallbackQuery", { callback_query_id: callback.id, text: "Telegram не привязан к NU TEAM" });
+          return Response.json({ ok: true });
+        }
+
+        let result: string | null = null;
+        if (readMatch[1] === "today") {
+          const intent = await interpretJarvis(ctx, "Какие у меня задачи сегодня?");
+          result = renderReadIntent(ctx, intent);
+        } else {
+          const query = readMatch[1] === "all"
+            ? "покажи все горящие"
+            : readMatch[1] === "critical"
+              ? "критичные"
+              : readMatch[1] === "people"
+                ? "по сотрудникам"
+                : "что горит?";
+          result = renderExecutiveAttention(ctx, query);
+        }
+
+        await telegram("answerCallbackQuery", { callback_query_id: callback.id, text: "Обновил" });
+        if (result) {
+          await telegram("editMessageText", {
+            chat_id: chatId,
+            message_id: callback.message.message_id,
+            text: result,
+            reply_markup: executiveKeyboard(),
+          });
+        }
+        return Response.json({ ok: true });
+      }
+
       const match = typeof callback.data === "string" ? callback.data.match(/^j:(ok|no):([0-9a-f-]{36})$/i) : null;
       if (!match) return Response.json({ ok: true });
       const ctx = await loadJarvisContext(chatId);
@@ -107,7 +159,7 @@ export async function POST(request: Request) {
 
     const executiveReply = renderExecutiveAttention(ctx, text);
     if (executiveReply) {
-      await send(chatId, executiveReply);
+      await send(chatId, executiveReply, { reply_markup: executiveKeyboard() });
       return Response.json({ ok: true });
     }
 
