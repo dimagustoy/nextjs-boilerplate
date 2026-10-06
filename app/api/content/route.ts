@@ -21,10 +21,12 @@ export async function GET() {
       .order("sort_order", { ascending: true }),
     supabase
       .from("site_articles")
-      .select("id,slug,title,excerpt,category,cover_image_url,published_at,is_featured")
-      .order("is_featured", { ascending: false })
+      .select("id,slug,title,excerpt,category,cover_image_url,published_at,is_featured,source_type,source_url,home_order")
+      .eq("show_on_home", true)
+      .eq("is_published", true)
+      .order("home_order", { ascending: true })
       .order("published_at", { ascending: false })
-      .limit(6),
+      .limit(3),
   ]);
 
   return NextResponse.json(
@@ -32,6 +34,6 @@ export async function GET() {
       locations: locationsResult.data ?? [],
       articles: articlesResult.data ?? [],
     },
-    { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" } },
+    { headers: { "Cache-Control": "public, s-maxage=30, stale-while-revalidate=120" } },
   );
 }
