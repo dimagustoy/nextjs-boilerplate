@@ -18,21 +18,21 @@ const fallbackArticles: Article[] = [
     title: "Не усложнять — это не про делать меньше",
     excerpt: "Как из одной идеи выросла сеть, которая остаётся местом для своих.",
     category: "brand",
-    cover_image_url: "https://images.unsplash.com/photo-1528605248644-14dd04022da1?auto=format&fit=crop&w=1400&q=85",
+    cover_image_url: "https://images.unsplash.com/photo-1528605248644-14dd04022da1?auto=format&fit=crop&w=1600&q=88",
   },
   {
     slug: "gagarin-opening",
     title: "Гагарин: новый формат внутри знакомого NU",
     excerpt: "Больше пространства, новая кухня и ещё один повод не ехать домой слишком рано.",
     category: "openings",
-    cover_image_url: "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1400&q=85",
+    cover_image_url: "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1400&q=88",
   },
   {
     slug: "people-of-nu",
     title: "Люди, из-за которых место становится своим",
     excerpt: "Истории команды и гостей, которые делают «Не Усложняй» живым брендом, а не вывеской.",
     category: "people",
-    cover_image_url: "https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=1400&q=85",
+    cover_image_url: "https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=1400&q=88",
   },
 ];
 
@@ -94,7 +94,7 @@ export default function Home() {
       <header className="site-header">
         <a className="brand" href="#top" aria-label="Не Усложняй">НЕ<br />УСЛОЖНЯЙ</a>
         <nav className={menuOpen ? "nav nav-open" : "nav"}>
-          <a href="#places" onClick={() => setMenuOpen(false)}>Заведения</a>
+          <a href="#all-places" onClick={() => setMenuOpen(false)}>Заведения</a>
           <a href="#journal" onClick={() => setMenuOpen(false)}>Журнал</a>
           <a href="#about" onClick={() => setMenuOpen(false)}>О нас</a>
           <a href="#franchise" onClick={() => setMenuOpen(false)}>Франшиза</a>
@@ -106,22 +106,25 @@ export default function Home() {
       <section className="hero" id="top">
         <div className="hero-media" />
         <div className="hero-shade" />
+        <div className="hero-wordmark" aria-hidden="true">NU</div>
+        <div className="hero-rail" aria-hidden="true"><span>НЕ УСЛОЖНЯЙ</span><span>EST. 2019</span></div>
         <div className="hero-copy">
-          <p className="eyebrow light">Сеть Не Усложняй · с 2019 года</p>
+          <p className="eyebrow light">Не Усложняй · с 2019 года</p>
           <h1>МЕСТО,<br />ГДЕ МОЖНО<br /><span>ПРОСТО БЫТЬ.</span></h1>
-          <p className="hero-sub">Не Усложняй — это свои люди, знакомое ощущение и вечер, которому не нужен сценарий.</p>
+          <p className="hero-sub">Свои люди, знакомое ощущение и вечер, которому не нужен сценарий.</p>
           <div className="hero-actions">
             <a className="button button-orange" href="#all-places">Найти Не Усложняй</a>
             <a className="text-link light" href="#journal">Что у нас происходит ↘</a>
           </div>
         </div>
+        <div className="hero-stamp"><b>NU</b><span>СВОЁ МЕСТО<br />БЕЗ ЛИШНЕГО</span></div>
         <div className="scroll-note">ЛИСТАЙ<br />ВНИЗ ↓</div>
       </section>
 
-      <section className="stats-band">
+      <section className="stats-band" aria-label="О бренде">
         <div><strong>2019</strong><span>начали в Екатеринбурге</span></div>
-        <div><strong>NU</strong><span>растём по стране</span></div>
-        <p>Новые места появляются быстрее,<br />чем успевает устареть список городов.</p>
+        <div><strong>NU</strong><span>один характер, разные города</span></div>
+        <p>Не делаем вид, что всё сложно.<br />Делаем места, куда хочется возвращаться.</p>
       </section>
 
       <section className="section places places-intro" id="places">
@@ -137,22 +140,25 @@ export default function Home() {
         </div>
       </section>
 
+      <section id="all-places" className="section all-places" aria-label="Заведения Не Усложняй" />
+
       <section className="manifesto" id="about">
         <p className="eyebrow light">Зачем мы вообще это сделали</p>
         <p className="manifesto-text">МЫ НЕ СТРОИЛИ<br />«КОНЦЕПЦИЮ».<br /><span>МЫ ДЕЛАЛИ МЕСТО,</span><br />КУДА САМИ ХОТИМ<br />ВОЗВРАЩАТЬСЯ.</p>
-        <div className="manifesto-foot"><span>С 2019 года</span><span>Екатеринбург → Россия</span></div>
+        <div className="manifesto-foot"><span>С 2019 года</span><span>Екатеринбург → дальше</span></div>
       </section>
 
       <section className="section journal" id="journal">
         <div className="section-head journal-head">
           <div><p className="eyebrow">Сейчас в NU</p><h2>ЖУРНАЛ</h2></div>
-          <p className="section-intro">Не «новости компании». События, люди, открытия, еда и истории, из которых складывается жизнь бренда.</p>
+          <div className="journal-side-copy"><p className="section-intro">События, люди, открытия, еда и истории. Не корпоративные новости, а жизнь бренда.</p><span>NU / STORIES / NOW</span></div>
         </div>
         <div className="article-grid">
           {articles.slice(0, 3).map((article, index) => (
             <article className={index === 0 ? "article-card article-main" : "article-card"} key={article.slug}>
               <div className="article-image">
                 <img src={article.cover_image_url || fallbackArticles[index % fallbackArticles.length].cover_image_url!} alt={article.title} />
+                <span className="article-number">0{index + 1}</span>
               </div>
               <div className="article-copy">
                 <span>{categoryLabel[article.category] || article.category}</span>
@@ -167,8 +173,8 @@ export default function Home() {
 
       <section className="photo-strip" aria-label="Атмосфера Не Усложняй">
         <div className="strip-photo strip-one" />
+        <div className="strip-copy"><small>ВЕЧЕР НЕ НУЖНО</small>НЕ<br />УСЛОЖНЯТЬ<span>ЕГО НУЖНО<br />ПРОЖИТЬ.</span></div>
         <div className="strip-photo strip-two" />
-        <div className="strip-copy">НЕ<br />УСЛОЖНЯЙ<br /><span>ВЕЧЕР.</span></div>
         <div className="strip-photo strip-three" />
       </section>
 
@@ -185,6 +191,7 @@ export default function Home() {
         </div>
 
         <form className="lead-form" onSubmit={submitLead}>
+          <p className="form-kicker">НЕ УСЛОЖНЯЙ · ФРАНШИЗА</p>
           <h3>Поговорим о городе</h3>
           <input name="full_name" placeholder="Имя" required minLength={2} />
           <input name="phone" placeholder="Телефон" required minLength={5} />
