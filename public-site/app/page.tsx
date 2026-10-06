@@ -107,7 +107,7 @@ export default function Home() {
         <div className="hero-media" />
         <div className="hero-shade" />
         <div className="hero-copy">
-          <p className="eyebrow light">15 заведений · 11 городов</p>
+          <p className="eyebrow light">Сеть Не Усложняй · с 2019 года</p>
           <h1>МЕСТО,<br />ГДЕ МОЖНО<br /><span>ПРОСТО БЫТЬ.</span></h1>
           <p className="hero-sub">Не Усложняй — это свои люди, знакомое ощущение и вечер, которому не нужен сценарий.</p>
           <div className="hero-actions">
@@ -119,9 +119,9 @@ export default function Home() {
       </section>
 
       <section className="stats-band">
-        <div><strong>15</strong><span>заведений</span></div>
-        <div><strong>11</strong><span>городов</span></div>
-        <p>Началось в Екатеринбурге.<br />Продолжается по всей стране.</p>
+        <div><strong>2019</strong><span>начали в Екатеринбурге</span></div>
+        <div><strong>NU</strong><span>растём по стране</span></div>
+        <p>Новые места появляются быстрее,<br />чем успевает устареть список городов.</p>
       </section>
 
       <section className="section places places-intro" id="places">
@@ -131,8 +131,8 @@ export default function Home() {
             <h2>НАЙДИ<br />СВОЙ NU.</h2>
           </div>
           <div className="places-intro-copy">
-            <p className="section-intro">Не каталог адресов, а разные характеры одного бренда. Выбирай город на карте, смотри пространство и строй маршрут.</p>
-            <a className="text-link" href="#all-places">Открыть карту сети ↓</a>
+            <p className="section-intro">Не каталог адресов, а разные характеры одного бренда. Выбирай город, смотри пространство и строй маршрут.</p>
+            <a className="text-link" href="#all-places">Смотреть города ↓</a>
           </div>
         </div>
       </section>
@@ -175,12 +175,12 @@ export default function Home() {
       <section className="franchise" id="franchise">
         <div className="franchise-copy">
           <p className="eyebrow">Франшиза</p>
-          <h2>СЛЕДУЮЩАЯ<br />ТОЧКА НА КАРТЕ<br /><span>МОЖЕТ БЫТЬ ТВОЕЙ.</span></h2>
-          <p>Мы уже работаем в 11 городах. Даём бренд, продуктовую и маркетинговую систему, партнёрские условия и поддержку сети.</p>
+          <h2>СЛЕДУЮЩИЙ<br />ГОРОД МОЖЕТ<br /><span>БЫТЬ ТВОИМ.</span></h2>
+          <p>Сеть растёт. Даём бренд, продуктовую и маркетинговую систему, партнёрские условия и поддержку команды.</p>
           <div className="mini-stats">
-            <div><strong>15</strong><span>точек</span></div>
-            <div><strong>11</strong><span>городов</span></div>
             <div><strong>2019</strong><span>год основания</span></div>
+            <div><strong>NU</strong><span>единый бренд</span></div>
+            <div><strong>↗</strong><span>сеть растёт</span></div>
           </div>
         </div>
 
