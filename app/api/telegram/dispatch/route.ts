@@ -5,6 +5,28 @@ export const maxDuration = 60;
 const labels: Record<string,string> = { created: "Новая задача", status: "Изменён статус", deadline: "Изменён дедлайн", changed: "Задача обновлена", comment: "Новый комментарий", deadline_requested: "Запрос переноса срока", deadline_approved: "Перенос срока согласован", deadline_rejected: "Перенос срока отклонён", reminder: "Напоминание о задаче", overdue: "Задача просрочена" };
 const statuses: Record<string,string> = { new: "Новая", accepted: "Принята", in_progress: "В работе", waiting: "Ожидание", at_risk: "Под угрозой", review: "На проверке", completed: "Завершена" };
 type Item = { id: string; lease_id: string; user_id: string; chat_id: number; task_id: string; kind: string; title: string; status: string; deadline: string; expected_result: string };
+type CheckinTask = { id:string; title:string; status:string; deadline:string; priority:string };
+type Checkin = { id:string; lease_id:string; user_id:string; chat_id:number; task_ids:string[]; tasks:CheckinTask[] };
+
+function checkinText(tasks:CheckinTask[]) {
+  const rows=tasks.map((task,index)=>{
+    const due=new Intl.DateTimeFormat("ru-RU",{timeZone:"Asia/Yekaterinburg",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}).format(new Date(task.deadline));
+    return `${index+1}. ${task.title}\n${statuses[task.status]||task.status} · срок ${due}`;
+  });
+  return [
+    "🌙 Короткий итог дня",
+    "",
+    "Ответь на это сообщение по номерам задач. Jarvis подготовит изменения и ничего не запишет без твоего подтверждения.",
+    "",
+    ...rows,
+    "",
+    "Пример:",
+    "1 готово",
+    "2 не успеваю, жду поставщика",
+    "3 всё по плану",
+  ].join("\n");
+}
+
 export async function POST(request: Request) {
   const token = request.headers.get("authorization")?.match(/^Bearer (\S+)$/)?.[1];
   if (!token) return Response.json({ error: "Forbidden" }, { status: 403 });
@@ -17,9 +39,32 @@ export async function POST(request: Request) {
     if (authorized.error || !authorized.data) return Response.json({ error: "Forbidden" }, { status: 403 });
     const reminders = await admin.rpc("nu_telegram_reminders");
     if (reminders.error) return Response.json({ error: "Reminder queue unavailable" }, { status: 503 });
+
+    let sent = 0;
+    const checkins = await admin.rpc("nu_jarvis_checkin_claim", { p_limit: 10 });
+    if (!checkins.error) {
+      for (const checkin of (checkins.data || []) as Checkin[]) {
+        let code=503;
+        let messageId:number|null=null;
+        try {
+          if (!checkin.tasks?.length) code=400;
+          else {
+            const result=await telegram("sendMessage", {
+              chat_id:checkin.chat_id,
+              text:checkinText(checkin.tasks),
+              reply_markup:{force_reply:true,selective:true,input_field_placeholder:"1 готово · 2 не успеваю..."},
+            }) as {message_id?:number};
+            messageId=Number.isSafeInteger(result?.message_id)?Number(result.message_id):null;
+            code=200; sent++;
+          }
+        } catch (e) { code=e instanceof TelegramError?e.code:503; }
+        const finish=await admin.rpc("nu_jarvis_checkin_finish",{p_id:checkin.id,p_lease:checkin.lease_id,p_code:code,p_message_id:messageId});
+        if(finish.error)throw new Error("Check-in acknowledgement failed");
+      }
+    }
+
     const { data, error } = await admin.rpc("nu_telegram_claim", { p_limit: 10 });
     if (error) return Response.json({ error: "Queue unavailable" }, { status: 503 });
-    let sent = 0;
     const items = [...(data || [])] as Item[];
     async function worker() {
       let item: Item | undefined;
