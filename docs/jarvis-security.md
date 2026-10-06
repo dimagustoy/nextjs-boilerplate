@@ -1,0 +1,1 @@
+Jarvis never trusts Telegram text as an authorization source. The Telegram chat must already be linked to a NU TEAM profile. The server resolves that profile, filters readable data by the existing role rules, and write RPCs re-check the actor/assignee relationship. Every write is staged as an expiring pending action and must be confirmed in Telegram.
