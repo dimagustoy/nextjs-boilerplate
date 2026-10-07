@@ -43,14 +43,30 @@ function responseText(data: any): string | null {
   return null;
 }
 
+function isActionLike(text: string) {
+  return /(постав|созда|поруч|назнач|добав|перенес|измени|помен|закрой|заверш|отмет|обнов|убер|удал|сформулиру|разбер|сделай задач)/i.test(text);
+}
+
 function sanitizeActionText(text: string) {
   return text
     .replace(/что\s+горит/gi, "критический список")
     .replace(/требует\s+внимания/gi, "нужно обработать")
-    .replace(/просроч[а-яё]*/gi, "задачи с нарушенными сроками");
+    .replace(/просроч[а-яё]*/gi, "задачи с нарушенными сроками")
+    .trim();
 }
 
-export async function loadJarvisMemory(ctx: BrainContext, chatId: number, limit = 14): Promise<MemoryMessage[]> {
+function safeFallback(text: string): BrainResult {
+  if (isActionLike(text)) {
+    return { mode: "action", reply: null, action_text: sanitizeActionText(text) };
+  }
+  return {
+    mode: "reply",
+    reply: "AI-мозг Jarvis временно не ответил. Данные NU TEAM я не менял. Повтори сообщение через несколько секунд.",
+    action_text: null,
+  };
+}
+
+export async function loadJarvisMemory(ctx: BrainContext, chatId: number, limit = 8): Promise<MemoryMessage[]> {
   const { data, error } = await ctx.admin
     .from("jarvis_chat_messages")
     .select("role,body,created_at,id")
@@ -58,7 +74,7 @@ export async function loadJarvisMemory(ctx: BrainContext, chatId: number, limit 
     .eq("chat_id", chatId)
     .order("created_at", { ascending: false })
     .order("id", { ascending: false })
-    .limit(Math.max(1, Math.min(limit, 24)));
+    .limit(Math.max(1, Math.min(limit, 12)));
   if (error) {
     console.error("Jarvis memory read failed", { code: error.code });
     return [];
@@ -83,7 +99,7 @@ export async function clearJarvisMemory(ctx: BrainContext, chatId: number) {
   if (error) throw error;
 }
 
-function taskPayload(ctx: BrainContext, dependencies: Array<{task_id:string;depends_on_task_id:string}>) {
+function taskPayload(ctx: BrainContext, dependencies: Array<{ task_id: string; depends_on_task_id: string }>) {
   const visibleIds = new Set(ctx.visibleTasks.map(t => t.id));
   const depMap = new Map<string, string[]>();
   for (const dep of dependencies) {
@@ -92,18 +108,20 @@ function taskPayload(ctx: BrainContext, dependencies: Array<{task_id:string;depe
     list.push(dep.depends_on_task_id);
     depMap.set(dep.task_id, list);
   }
+
   const name = (id: string) => ctx.staff.find(p => p.id === id)?.full_name || "Сотрудник";
   const project = (id: string | null) => ctx.projects.find(p => p.id === id)?.name || "Без проекта";
-  const active = ctx.visibleTasks.filter(t => t.status !== "completed").slice(0, 160);
+  const active = ctx.visibleTasks.filter(t => t.status !== "completed").slice(0, 100);
   const recentlyCompleted = ctx.visibleTasks
     .filter(t => t.status === "completed" && t.completed_at)
-    .sort((a,b) => new Date(b.completed_at!).getTime() - new Date(a.completed_at!).getTime())
-    .slice(0, 20);
+    .sort((a, b) => new Date(b.completed_at!).getTime() - new Date(a.completed_at!).getTime())
+    .slice(0, 12);
+
   const mapTask = (t: Task) => ({
     id: t.id,
     title: t.title,
-    description: (t.description || "").slice(0, 450),
-    expected_result: t.expected_result.slice(0, 450),
+    description: (t.description || "").slice(0, 320),
+    expected_result: t.expected_result.slice(0, 320),
     assignee_id: t.assignee_id,
     assignee: name(t.assignee_id),
     project_id: t.project_id,
@@ -117,17 +135,24 @@ function taskPayload(ctx: BrainContext, dependencies: Array<{task_id:string;depe
       return blocker ? { id: blocker.id, title: blocker.title, status: blocker.status, deadline: blocker.deadline } : null;
     }).filter(Boolean),
   });
+
   return { active: active.map(mapTask), recently_completed: recentlyCompleted.map(mapTask) };
 }
 
 export async function runJarvisBrain(ctx: BrainContext, chatId: number, text: string): Promise<BrainResult | null> {
   const key = process.env.OPENAI_API_KEY;
-  if (!key) return null;
+  if (!key) {
+    return {
+      mode: "reply",
+      reply: "AI-мозг Jarvis не настроен: на сервере нет OPENAI_API_KEY.",
+      action_text: null,
+    };
+  }
 
   const [history, depsResult, deadlineResult] = await Promise.all([
     loadJarvisMemory(ctx, chatId),
-    ctx.admin.from("task_dependencies").select("task_id,depends_on_task_id").limit(3000),
-    ctx.admin.from("deadline_requests").select("task_id,requested_by,requested_deadline,reason").eq("status", "pending").limit(200),
+    ctx.admin.from("task_dependencies").select("task_id,depends_on_task_id").limit(2000),
+    ctx.admin.from("deadline_requests").select("task_id,requested_by,requested_deadline,reason").eq("status", "pending").limit(100),
   ]);
   const dependencies = depsResult.error ? [] : (depsResult.data || []);
   const pendingDeadlines = deadlineResult.error ? [] : (deadlineResult.data || []);
@@ -143,35 +168,40 @@ export async function runJarvisBrain(ctx: BrainContext, chatId: number, text: st
     required: ["mode", "reply", "action_text"],
   };
 
-  const system = `Ты Jarvis, полноценный рабочий AI-ассистент сети «Не Усложняй». Ты не командный парсер. С тобой разговаривают обычным русским языком.
+  const system = `Ты Jarvis, полноценный рабочий AI-ассистент сети «Не Усложняй». С тобой разговаривают обычным русским языком.
 
 Сейчас ${new Date().toISOString()}. Рабочая таймзона: ${TZ} (UTC+5).
 
-Что ты делаешь:
-- Отвечаешь на вопросы о задачах, проектах и команде по фактическим данным ниже.
-- Анализируешь приоритеты, загрузку, просрочки, блокеры и риски и можешь давать управленческий совет.
-- Помнишь последние реплики и понимаешь продолжения вроде «а у Сергея?», «её на пятницу», «тогда оставь так».
-- Можешь нормально поддержать рабочий разговор и ответить на общий вопрос, если для него не нужны свежие данные из интернета.
+Твои задачи:
+- отвечать на вопросы о задачах, проектах и команде только по фактическим данным ниже;
+- анализировать приоритеты, загрузку, нарушенные сроки, блокеры и риски;
+- помнить последние реплики и понимать продолжения вроде «а у Сергея?», «её на пятницу», «тогда оставь так»;
+- нормально поддерживать рабочий разговор.
 
-Выбери mode=reply, если пользователь спрашивает, обсуждает, просит анализ, уточняет прошлый ответ или просто разговаривает. В reply дай естественный ответ до 2500 символов.
+mode=reply используй для вопросов, анализа, обсуждения и уточнений. Ответ до 2500 символов.
 
-Выбери mode=action, только если пользователь явно хочет изменить данные NU TEAM: создать задачу, поменять статус, перенести дедлайн или добавить комментарий. В action_text перепиши просьбу как самостоятельную и однозначную команду для внутреннего диспетчера. Обязательно используй точное название задачи и точное имя сотрудника из данных, если они известны. Если пользователь сказал относительную дату, преврати её в конкретную дату по Екатеринбургу. Если создаётся задача и ожидаемый результат очевиден, сформулируй его сам.
+mode=action используй только когда пользователь явно хочет изменить NU TEAM: создать задачу, поменять статус, перенести дедлайн или добавить комментарий. action_text должен быть самостоятельной однозначной командой для внутреннего диспетчера.
 
-Для mode=action не используй фразы «что горит», «требует внимания» и слова с корнем «просроч». Это зарезервированные read-only команды старого диспетчера. Вместо них пиши «задачи с нарушенными сроками». Для создания задачи action_text обязательно должен содержать исполнителя, конкретный дедлайн, название и явную строку «Результат: ...».
+Для создания задачи action_text обязательно должен содержать:
+1) точное имя исполнителя из списка;
+2) конкретный дедлайн;
+3) короткое нормальное название задачи;
+4) строку «Результат: ...» с измеримым ожидаемым результатом.
+Если пользователь просит «сам сформулируй», сформулируй название и результат сам по смыслу.
 
-Если действие неоднозначно, НЕ выдумывай. Используй mode=reply и задай один конкретный уточняющий вопрос. Не проси пользователя повторять всё заново.
+В mode=action не используй фразы «что горит», «требует внимания» и слова с корнем «просроч». Вместо этого используй выражение «задачи с нарушенными сроками».
 
-Никогда не выдумывай UUID, сотрудников, проекты, задачи или факты. Не показывай UUID человеку. Не утверждай, что изменение уже сделано: после mode=action система отдельно покажет подтверждение.
+Если действие неоднозначно, верни mode=reply и задай один конкретный уточняющий вопрос. Не выдумывай UUID, сотрудников, проекты, задачи или факты. Не показывай UUID пользователю. Не говори, что изменение уже выполнено: система отдельно запросит подтверждение.
 
 Пользователь: ${JSON.stringify(ctx.me)}
-Команда: ${JSON.stringify(ctx.staff.map(p => ({id:p.id,name:p.full_name,role:p.role})))}
-Проекты: ${JSON.stringify(ctx.projects.map(p => ({id:p.id,name:p.name})))}
+Команда: ${JSON.stringify(ctx.staff.map(p => ({ id: p.id, name: p.full_name, role: p.role })))}
+Проекты: ${JSON.stringify(ctx.projects.map(p => ({ id: p.id, name: p.name })))}
 Задачи: ${JSON.stringify(taskPayload(ctx, dependencies))}
 Ожидающие запросы переноса сроков: ${JSON.stringify(pendingDeadlines)}`;
 
   const input = [
     { role: "system", content: system },
-    ...history.slice(-14).map(message => ({ role: message.role, content: message.body.slice(0, 4000) })),
+    ...history.slice(-8).map(message => ({ role: message.role, content: message.body.slice(0, 2500) })),
     { role: "user", content: text },
   ];
 
@@ -187,31 +217,38 @@ export async function runJarvisBrain(ctx: BrainContext, chatId: number, text: st
         reasoning: { effort: "low" },
         input,
         text: { format: { type: "json_schema", name: "jarvis_brain", strict: true, schema } },
-        max_output_tokens: 1200,
+        max_output_tokens: 1400,
         store: false,
       }),
-      signal: AbortSignal.timeout(20000),
+      signal: AbortSignal.timeout(35000),
       cache: "no-store",
     });
+
     if (!response.ok) {
       console.error("Jarvis brain request failed", { status: response.status });
-      return null;
+      return safeFallback(text);
     }
+
     const raw = responseText(await response.json());
-    if (!raw) return null;
+    if (!raw) {
+      console.error("Jarvis brain empty response");
+      return safeFallback(text);
+    }
+
     const parsed = JSON.parse(raw) as BrainResult;
     if (parsed.mode === "reply") {
-      parsed.reply = parsed.reply?.trim().slice(0, 3500) || "Не смог нормально сформулировать ответ. Попробуй ещё раз.";
-      parsed.action_text = null;
-    } else {
-      parsed.action_text = parsed.action_text?.trim().slice(0, 4000) || null;
-      parsed.reply = null;
-      if (!parsed.action_text) return null;
-      parsed.action_text = sanitizeActionText(parsed.action_text);
+      return {
+        mode: "reply",
+        reply: parsed.reply?.trim().slice(0, 3500) || "Не смог нормально сформулировать ответ. Попробуй ещё раз.",
+        action_text: null,
+      };
     }
-    return parsed;
+
+    const actionText = parsed.action_text?.trim().slice(0, 4000);
+    if (!actionText) return safeFallback(text);
+    return { mode: "action", reply: null, action_text: sanitizeActionText(actionText) };
   } catch (error) {
     console.error("Jarvis brain unavailable", { name: error instanceof Error ? error.name : "UnknownError" });
-    return null;
+    return safeFallback(text);
   }
 }
