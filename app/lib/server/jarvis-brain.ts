@@ -43,6 +43,13 @@ function responseText(data: any): string | null {
   return null;
 }
 
+function sanitizeActionText(text: string) {
+  return text
+    .replace(/что\s+горит/gi, "критический список")
+    .replace(/требует\s+внимания/gi, "нужно обработать")
+    .replace(/просроч[а-яё]*/gi, "задачи с нарушенными сроками");
+}
+
 export async function loadJarvisMemory(ctx: BrainContext, chatId: number, limit = 14): Promise<MemoryMessage[]> {
   const { data, error } = await ctx.admin
     .from("jarvis_chat_messages")
@@ -150,6 +157,8 @@ export async function runJarvisBrain(ctx: BrainContext, chatId: number, text: st
 
 Выбери mode=action, только если пользователь явно хочет изменить данные NU TEAM: создать задачу, поменять статус, перенести дедлайн или добавить комментарий. В action_text перепиши просьбу как самостоятельную и однозначную команду для внутреннего диспетчера. Обязательно используй точное название задачи и точное имя сотрудника из данных, если они известны. Если пользователь сказал относительную дату, преврати её в конкретную дату по Екатеринбургу. Если создаётся задача и ожидаемый результат очевиден, сформулируй его сам.
 
+Для mode=action не используй фразы «что горит», «требует внимания» и слова с корнем «просроч». Это зарезервированные read-only команды старого диспетчера. Вместо них пиши «задачи с нарушенными сроками». Для создания задачи action_text обязательно должен содержать исполнителя, конкретный дедлайн, название и явную строку «Результат: ...».
+
 Если действие неоднозначно, НЕ выдумывай. Используй mode=reply и задай один конкретный уточняющий вопрос. Не проси пользователя повторять всё заново.
 
 Никогда не выдумывай UUID, сотрудников, проекты, задачи или факты. Не показывай UUID человеку. Не утверждай, что изменение уже сделано: после mode=action система отдельно покажет подтверждение.
@@ -198,6 +207,7 @@ export async function runJarvisBrain(ctx: BrainContext, chatId: number, text: st
       parsed.action_text = parsed.action_text?.trim().slice(0, 4000) || null;
       parsed.reply = null;
       if (!parsed.action_text) return null;
+      parsed.action_text = sanitizeActionText(parsed.action_text);
     }
     return parsed;
   } catch (error) {
