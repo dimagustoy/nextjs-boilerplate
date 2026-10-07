@@ -3,6 +3,7 @@ import { appUrl, sameSecret, telegram } from "../../../lib/server/telegram";
 import { clearJarvisMemory, rememberJarvis } from "../../../lib/server/jarvis-brain";
 import { loadJarvisContext } from "../../../lib/server/jarvis";
 import { executeInviteMember, runJarvisAgentV3, type JarvisV3Action } from "../../../lib/server/jarvis-agent-v3";
+import { describeTelegramPhoto } from "../../../lib/server/jarvis-media";
 import { sanitizeV3Actions } from "../../../lib/server/jarvis-permissions-v3";
 import { renderV3ProposalDetailed, renderV3ResultDetailed } from "../../../lib/server/jarvis-render-v3";
 
@@ -76,7 +77,8 @@ export async function POST(request:Request){
   const message=update?.message;const type=message?.chat?.type;const privateChat=type==="private";const groupChat=isGroup(type);const chatId=message?.chat?.id;const actorId=message?.from?.id;
   if(!message||message.from?.is_bot||(!privateChat&&!groupChat)||!Number.isSafeInteger(chatId)||!Number.isSafeInteger(actorId)||actorId<=0)return Response.json({ok:true});if(privateChat&&chatId!==actorId)return Response.json({ok:true});
 
-  const rawText=typeof message.text==="string"?message.text.trim():"";const group=groupChat?groupCommand(rawText):{explicit:true,text:rawText};
+  const rawText=typeof message.text==="string"?message.text.trim():typeof message.caption==="string"?message.caption.trim():"";
+  const group=groupChat?groupCommand(rawText):{explicit:true,text:rawText};
   if(groupChat&&!group.explicit)return Response.json({ok:true});
   if(privateChat&&/^\/start(?:@[A-Za-z0-9_]+)?(?:\s+|$)/i.test(rawText))return v2Post(v2Request);
   const ctx=await loadJarvisContext(actorId);if(!ctx){await send(chatId,groupChat?"Сначала подключи свой Telegram к NU TEAM в личном чате с ботом.":"Открой NU TEAM → Telegram → «Подключить», затем перейди по персональной ссылке.");return Response.json({ok:true});}
@@ -90,12 +92,18 @@ export async function POST(request:Request){
     if(groupChat)return Response.json({ok:true});
     try{text=await transcribeVoice(message)||"";}catch{await send(chatId,"Не смог разобрать голосовое. Отправь его ещё раз или напиши текстом.");return Response.json({ok:true});}
   }
-  if(!text){await send(chatId,"Сейчас понимаю текст и голосовые сообщения. Для фото и файлов пока используй текстовое пояснение.");return Response.json({ok:true});}
+  if(Array.isArray(message.photo)&&message.photo.length){
+    try{
+      const vision=await describeTelegramPhoto(message);
+      if(vision)text=[text||"Проанализируй изображение в контексте NU OS.",`Контекст изображения: ${vision}`].join("\n\n");
+    }catch{await send(chatId,"Не смог разобрать изображение. Пришли его ещё раз или добавь текстовое пояснение.");return Response.json({ok:true});}
+  }
+  if(!text){await send(chatId,"Сейчас понимаю текст, голосовые и изображения. Для других файлов добавь текстовое пояснение.");return Response.json({ok:true});}
   if(privateChat&&/^(?:новый диалог|сбрось контекст|очисти контекст|забудь контекст)[.!]?$/i.test(text)){await clearJarvisMemory(ctx as any,chatId);await sendRemembered(ctx,chatId,"Контекст очищен. Начинаем с чистого листа.");return Response.json({ok:true});}
 
   const context=replyText(message);const agent=await runJarvisAgentV3(ctx as any,chatId,text,context);
   if(!agent){await send(chatId,"AI-мозг Jarvis временно недоступен. Данные я не менял. Попробуй ещё раз через несколько секунд.");return Response.json({ok:true});}
-  await rememberJarvis(ctx as any,chatId,"user",message.voice?`[Голосовое] ${text}`:text);
+  await rememberJarvis(ctx as any,chatId,"user",message.voice?`[Голосовое] ${text}`:Array.isArray(message.photo)&&message.photo.length?`[Изображение] ${text}`:text);
   if(agent.mode==="reply"){await sendRemembered(ctx,chatId,agent.reply||"Не смог сформулировать ответ.",groupChat?{reply_parameters:{message_id:message.message_id,allow_sending_without_reply:true}}:{});return Response.json({ok:true});}
   const safeActions=sanitizeV3Actions(ctx as any,agent.actions);
   if(!safeActions.length){await sendRemembered(ctx,chatId,"По твоей роли это изменение недоступно. Данные не менял.");return Response.json({ok:true});}
