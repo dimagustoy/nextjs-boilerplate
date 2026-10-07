@@ -1,6 +1,7 @@
 import { adminClient, sameSecret, telegram, tokenHash } from "../../../lib/server/telegram";
 import { renderExecutiveAttention } from "../../../lib/server/jarvis-executive";
 import { cancelCheckinAction, executeCheckinAction, prepareCheckinAction } from "../../../lib/server/jarvis-checkin";
+import { clearJarvisMemory, rememberJarvis, runJarvisBrain } from "../../../lib/server/jarvis-brain";
 import {
   cancelPendingAction,
   executePendingAction,
@@ -17,6 +18,12 @@ export const runtime = "nodejs";
 
 async function send(chatId: number, text: string, extra: Record<string, unknown> = {}) {
   return telegram("sendMessage", { chat_id: chatId, text, ...extra });
+}
+
+async function sendRemembered(ctx: NonNullable<Awaited<ReturnType<typeof loadJarvisContext>>>, chatId: number, text: string, extra: Record<string, unknown> = {}) {
+  const result = await send(chatId, text, extra);
+  await rememberJarvis(ctx, chatId, "assistant", text);
+  return result;
 }
 
 function executiveKeyboard() {
@@ -165,6 +172,7 @@ export async function POST(request: Request) {
             text: result,
             reply_markup: executiveKeyboard(),
           });
+          await rememberJarvis(ctx, chatId, "assistant", result);
         }
         return Response.json({ ok: true });
       }
@@ -207,7 +215,8 @@ export async function POST(request: Request) {
       }
       await telegram("answerCallbackQuery", { callback_query_id: callback.id, text: match[1] === "ok" ? "Принято" : "Отменено" });
       await telegram("editMessageReplyMarkup", { chat_id: chatId, message_id: callback.message.message_id, reply_markup: { inline_keyboard: [] } });
-      await send(chatId, result);
+      if (privateChat) await sendRemembered(ctx, chatId, result);
+      else await send(chatId, result);
       return Response.json({ ok: true });
     }
 
@@ -256,6 +265,12 @@ export async function POST(request: Request) {
       return Response.json({ ok: true });
     }
 
+    if (privateChat && /^(?:новый диалог|сбрось контекст|очисти контекст|забудь контекст)[.!]?$/i.test(text)) {
+      await clearJarvisMemory(ctx, chatId);
+      await sendRemembered(ctx, chatId, "Контекст очищен. Начинаем с чистого листа.");
+      return Response.json({ ok: true });
+    }
+
     if (privateChat && Number.isSafeInteger(message.reply_to_message?.message_id)) {
       const { data: checkin } = await ctx.admin
         .from("telegram_checkin_sessions")
@@ -285,14 +300,28 @@ export async function POST(request: Request) {
     if (privateChat) {
       const executiveReply = renderExecutiveAttention(ctx, text);
       if (executiveReply) {
-        await send(chatId, executiveReply, { reply_markup: executiveKeyboard() });
+        await rememberJarvis(ctx, chatId, "user", text);
+        await sendRemembered(ctx, chatId, executiveReply, { reply_markup: executiveKeyboard() });
         return Response.json({ ok: true });
       }
     }
 
     const baseText = groupChat ? replyTaskContext(message, text) : normalizeJarvisReadQuery(text);
-    const interpretedText = normalizeSelfAssignment(baseText, ctx.me.full_name);
-    const intent = await interpretJarvis(ctx, interpretedText);
+    let dispatcherText = normalizeSelfAssignment(baseText, ctx.me.full_name);
+
+    if (privateChat) {
+      const brain = await runJarvisBrain(ctx, chatId, text);
+      await rememberJarvis(ctx, chatId, "user", text);
+      if (brain?.mode === "reply" && brain.reply) {
+        await sendRemembered(ctx, chatId, brain.reply);
+        return Response.json({ ok: true });
+      }
+      if (brain?.mode === "action" && brain.action_text) {
+        dispatcherText = normalizeSelfAssignment(brain.action_text, ctx.me.full_name);
+      }
+    }
+
+    const intent = await interpretJarvis(ctx, dispatcherText);
     const readReply = renderReadIntent(ctx, intent);
     if (readReply) {
       if (groupChat) {
@@ -300,19 +329,24 @@ export async function POST(request: Request) {
           reply_parameters: { message_id: message.message_id, allow_sending_without_reply: true },
         });
       } else {
-        await send(chatId, readReply);
+        await sendRemembered(ctx, chatId, readReply);
       }
       return Response.json({ ok: true });
     }
 
     const validation = validateWrite(ctx, intent);
     if (validation) {
-      await send(chatId, validation, groupChat ? { reply_parameters: { message_id: message.message_id, allow_sending_without_reply: true } } : {});
+      if (groupChat) {
+        await send(chatId, validation, { reply_parameters: { message_id: message.message_id, allow_sending_without_reply: true } });
+      } else {
+        await sendRemembered(ctx, chatId, validation);
+      }
       return Response.json({ ok: true });
     }
 
     const actionId = await savePendingAction(ctx, chatId, intent);
-    await send(chatId, renderProposal(ctx, intent), {
+    const proposal = renderProposal(ctx, intent);
+    const extra = {
       ...(groupChat ? { reply_parameters: { message_id: message.message_id, allow_sending_without_reply: true } } : {}),
       reply_markup: {
         inline_keyboard: [[
@@ -320,7 +354,9 @@ export async function POST(request: Request) {
           { text: "❌ Отмена", callback_data: `j:no:${actionId}` },
         ]],
       },
-    });
+    };
+    if (groupChat) await send(chatId, proposal, extra);
+    else await sendRemembered(ctx, chatId, proposal, extra);
     return Response.json({ ok: true });
   } catch (error) {
     console.error("Telegram webhook failed", error);
