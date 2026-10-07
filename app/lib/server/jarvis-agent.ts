@@ -413,17 +413,23 @@ export async function runJarvisAgent(ctx: AgentContext, chatId: number, text: st
         reasoning: { effort: "low" },
         input,
         text: { format: { type: "json_schema", name: "jarvis_agent", strict: true, schema } },
-        max_output_tokens: 4200,
+        max_output_tokens: 12000,
+        truncation: "auto",
         store: false,
       }),
-      signal: AbortSignal.timeout(45000),
+      signal: AbortSignal.timeout(52000),
       cache: "no-store",
     });
     if (!response.ok) {
       console.error("Jarvis agent request failed", { status: response.status });
       return null;
     }
-    const raw = responseText(await response.json());
+    const data = await response.json();
+    if (data?.status === "incomplete") {
+      console.error("Jarvis agent response incomplete", { reason: data?.incomplete_details?.reason || "unknown" });
+      return null;
+    }
+    const raw = responseText(data);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as JarvisAgentResult;
     if (parsed.mode === "reply") {
