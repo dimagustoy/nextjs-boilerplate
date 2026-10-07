@@ -1,0 +1,31 @@
+name: Jarvis v3 build diagnostics
+
+on:
+  push:
+    branches:
+      - diagnostics/jarvis-v3
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_test
+      SUPABASE_SECRET_KEY: sb_secret_test
+      TELEGRAM_BOT_TOKEN: test
+      TELEGRAM_BOT_USERNAME: ne_uslozhnyay_tasks_bot
+      TELEGRAM_WEBHOOK_SECRET: test_secret_1234567890
+      TELEGRAM_DISPATCH_SECRET: test_dispatch_1234567890
+      NU_ENV: production
+      APP_URL: https://example.com
+      OPENAI_API_KEY: sk-test
+      OPENAI_MODEL: gpt-6-luna
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
