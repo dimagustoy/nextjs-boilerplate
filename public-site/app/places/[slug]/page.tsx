@@ -1,13 +1,11 @@
+import VenueAmenities from "../../VenueAmenities";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@supabase/supabase-js";
 
-const fallbacks: Record<string, any> = {
-  "ekb-turgeneva-22": { city: "Екатеринбург", name: "Тургенева", address: "ул. Тургенева, 22", short_description: "Точка в центре города. Для встреч, долгих разговоров и вечеров без лишнего шума.", hero_image_url: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=2200&q=88" },
-  "ekb-tatishcheva-47a": { city: "Екатеринбург", name: "Татищева", address: "ул. Татищева, 47А", short_description: "Камерный NU на ВИЗе. Место для неспешных вечеров и своих людей.", hero_image_url: "https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=2200&q=88" },
-  "ekb-chkalova-258": { city: "Екатеринбург", name: "Чкалова", address: "ул. Чкалова, 258", short_description: "Просторная точка на юге города. Когда хочется собраться компанией и никуда не спешить.", hero_image_url: "https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=2200&q=88" },
-  "ekb-beloglazova-2g": { city: "Екатеринбург", name: "Гагарин", address: "бул. Владимира Белоглазова, 2Г", short_description: "Новый большой NU с собственным характером, кухней и пространством для событий.", hero_image_url: "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=2200&q=88" },
-};
+import { fallbackPlaces } from "../../fallback-locations";
+import VenueContacts, { safeContactUrl } from "../../VenueContacts";
+import VenueRatings from "../../VenueRatings";
 
 async function getPlace(slug: string) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -16,13 +14,14 @@ async function getPlace(slug: string) {
     const supabase = createClient(url, key, { auth: { persistSession: false } });
     const { data } = await supabase
       .from("site_locations")
-      .select("slug,city,name,address,phone,short_description,hero_image_url,gallery_urls,two_gis_url,yandex_maps_url,messenger_url,rating_2gis,rating_yandex,opening_hours")
+      .select("slug,city,name,address,phone,short_description,hero_image_url,gallery_urls,two_gis_url,yandex_maps_url,messenger_url,rating_2gis,rating_yandex,opening_hours,telegram_channel_url,vk_group_url,booking_telegram_url,booking_max_url,booking_whatsapp_url,has_kitchen,has_spirits,has_beer,has_console")
       .eq("slug", slug)
+      .eq("is_published", true)
       .maybeSingle();
     if (data) return data;
   }
-  const fallback = fallbacks[slug];
-  return fallback ? { slug, ...fallback, gallery_urls: [], opening_hours: [] } : null;
+  const fallback = fallbackPlaces.find((place) => place.slug === slug);
+  return fallback ? { ...fallback, gallery_urls: [], messenger_url: null } : null;
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -63,6 +62,7 @@ export default async function PlacePage({ params }: { params: Promise<{ slug: st
           <h1>{place.name}</h1>
           <p>{place.short_description}</p>
           <div className="place-detail-actions">
+            <VenueContacts place={place} className="button button-light" />
             {place.phone && <a className="button button-orange" href={`tel:${String(place.phone).replace(/[^+\d]/g, "")}`}>Позвонить</a>}
             {place.two_gis_url && <a className="button button-light" href={place.two_gis_url} target="_blank" rel="noreferrer">Маршрут в 2ГИС ↗</a>}
             {place.yandex_maps_url && <a className="button button-light" href={place.yandex_maps_url} target="_blank" rel="noreferrer">Яндекс Карты ↗</a>}
@@ -76,9 +76,9 @@ export default async function PlacePage({ params }: { params: Promise<{ slug: st
           <h2>{place.address || "Адрес уточняется"}</h2>
           {hours.length > 0 && <div className="place-hours">{hours.map((item: string) => <span key={item}>{item}</span>)}</div>}
         </div>
-        <div className="place-ratings">
-          {place.rating_2gis != null && <div><strong>{Number(place.rating_2gis).toFixed(1)}</strong><span>2ГИС</span></div>}
-          {place.rating_yandex != null && <div><strong>{Number(place.rating_yandex).toFixed(1)}</strong><span>Яндекс</span></div>}
+        <div>
+          <div className="place-ratings"><VenueRatings place={place} /></div>
+          <VenueAmenities place={place} />
         </div>
       </section>
 
@@ -102,8 +102,9 @@ export default async function PlacePage({ params }: { params: Promise<{ slug: st
         <p className="eyebrow light">{place.city}</p>
         <h2>УВИДИМСЯ<br />В NU.</h2>
         <div className="place-detail-actions">
+            <VenueContacts place={place} className="button button-light" />
           {place.phone && <a className="button button-orange" href={`tel:${String(place.phone).replace(/[^+\d]/g, "")}`}>Позвонить</a>}
-          {place.messenger_url && <a className="button button-light" href={place.messenger_url} target="_blank" rel="noreferrer">Написать ↗</a>}
+          {safeContactUrl(place.messenger_url) && !place.booking_telegram_url && !place.booking_max_url && !place.booking_whatsapp_url && <a className="button button-light" href={safeContactUrl(place.messenger_url)!} target="_blank" rel="noreferrer">Написать ↗</a>}
           {!place.phone && !place.messenger_url && <Link className="button button-orange" href="/">На главную</Link>}
         </div>
       </section>

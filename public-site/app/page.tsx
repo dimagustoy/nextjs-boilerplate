@@ -99,7 +99,7 @@ export default function Home() {
         <div className="hero-rail" aria-hidden="true"><span>НЕ УСЛОЖНЯЙ</span><span>EST. 2019</span></div>
         <div className="hero-copy">
           <p className="eyebrow light">Не Усложняй · с 2019 года</p>
-          <h1>МЕСТО,<br />ГДЕ МОЖНО<br /><span>ПРОСТО БЫТЬ.</span></h1>
+          <h1>МЕСТО,<br />ГДЕ МОЖНО<br /><span>ПРОСТО БЫТЬ СОБОЙ.</span></h1>
           <p className="hero-sub">Свои люди, знакомое ощущение и вечер, которому не нужен сценарий.</p>
           <div className="hero-actions">
             <a className="button button-orange" href="#all-places">Найти Не Усложняй</a>
@@ -192,10 +192,10 @@ export default function Home() {
           <input name="city" aria-label="Город" autoComplete="address-level2" placeholder="Город" required minLength={2} />
           <select name="budget" aria-label="Бюджет на запуск" defaultValue="">
             <option value="" disabled>Бюджет на запуск</option>
-            <option>до 5 млн ₽</option>
             <option>5–10 млн ₽</option>
             <option>10–15 млн ₽</option>
-            <option>15+ млн ₽</option>
+            <option>15–20 млн ₽</option>
+            <option>20+ млн ₽</option>
           </select>
           <input className="hp" type="text" name="company" tabIndex={-1} autoComplete="off" aria-hidden="true" />
           <button className="button button-orange" disabled={leadState === "loading"}>

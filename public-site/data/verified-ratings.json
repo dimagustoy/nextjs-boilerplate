@@ -1,0 +1,61 @@
+{
+  "checked_at": "2026-10-07",
+  "locations": [
+    {
+      "slug": "astrakhan-fioletova-8",
+      "rating_yandex": 5,
+      "yandex_maps_url": "https://yandex.ru/maps/org/ne_uslozhnyay/229334912826/"
+    },
+    {
+      "slug": "ivanovo-gromoboya-15a",
+      "rating_yandex": 5,
+      "yandex_maps_url": "https://yandex.ru/maps/org/ne_uslozhnyay_lounge/29832231037/"
+    },
+    {
+      "slug": "kazan-karbysheva-40a",
+      "rating_yandex": 5,
+      "yandex_maps_url": "https://yandex.ru/maps/org/ne_uslozhnyay/24179758068/"
+    },
+    {
+      "slug": "kostroma-gornaya-27a",
+      "rating_2gis": 4.8,
+      "two_gis_url": "https://2gis.ru/kostroma/firm/70000001060889296"
+    },
+    {
+      "slug": "samara-fadeeva-42v",
+      "rating_yandex": 5,
+      "yandex_maps_url": "https://yandex.ru/maps/org/ne_uslozhnyay/52363958816/",
+      "rating_2gis": 5,
+      "two_gis_url": "https://2gis.ru/samara/firm/70000001097446298"
+    },
+    {
+      "slug": "yaroslavl-deputatskiy-2",
+      "rating_yandex": 5,
+      "yandex_maps_url": "https://yandex.ru/maps/org/ne_uslozhnyay/117496707111/",
+      "rating_2gis": 5,
+      "two_gis_url": "https://2gis.ru/yaroslavl/firm/70000001044488635"
+    },
+    {
+      "slug": "bryansk-ulyanova-123a",
+      "rating_yandex": 5,
+      "yandex_maps_url": "https://yandex.ru/maps/org/ne_uslozhnyay/42588204440/"
+    },
+    {
+      "slug": "tyumen-volodarskogo-14",
+      "rating_yandex": 5,
+      "yandex_maps_url": "https://yandex.ru/maps/org/ne_uslozhnyay/110262969650/"
+    },
+    {
+      "slug": "petrozavodsk-pervomayskiy-4b",
+      "rating_yandex": 5,
+      "yandex_maps_url": "https://yandex.ru/maps/org/nu/60958572346/"
+    },
+    {
+      "slug": "samara-karla-marksa-196",
+      "rating_yandex": 5,
+      "yandex_maps_url": "https://yandex.ru/maps/org/ne_uslozhnyay/192529701135/",
+      "rating_2gis": 5,
+      "two_gis_url": "https://2gis.ru/samara/firm/70000001039956595"
+    }
+  ]
+}

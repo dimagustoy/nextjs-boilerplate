@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../../lib/supabase";
 
+import VenueEditor from "./VenueEditor";
+
 type Role = "owner" | "manager" | "smm" | "senior_master";
 type Article = {
   id: string;
@@ -160,7 +162,7 @@ export default function SiteJournalAdmin() {
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
           <div>
             <a href="/dashboard" className="text-xs font-semibold uppercase tracking-[.18em] text-orange-600">← NU OS</a>
-            <h1 className="mt-1 text-2xl font-black tracking-tight">Редактор сайта · Журнал</h1>
+            <h1 className="mt-1 text-2xl font-black tracking-tight">Редактор сайта</h1>
           </div>
           <div className="text-right text-xs text-stone-500"><div>Автосбор из Telegram включён</div><div className="font-semibold text-stone-700">Доступ: {role}</div></div>
         </div>
@@ -168,6 +170,8 @@ export default function SiteJournalAdmin() {
 
       <div className="mx-auto max-w-7xl space-y-7 p-5 md:p-8">
         {notice && <div className="rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm font-medium text-orange-900">{notice}</div>}
+
+        {(role === "owner" || role === "manager") && <VenueEditor />}
 
         <section className="rounded-3xl bg-[#181716] p-5 text-white shadow-sm md:p-7">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
