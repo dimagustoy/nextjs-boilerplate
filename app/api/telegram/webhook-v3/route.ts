@@ -2,7 +2,8 @@ import { POST as v2Post } from "../webhook-v2/route";
 import { appUrl, sameSecret, telegram } from "../../../lib/server/telegram";
 import { clearJarvisMemory, rememberJarvis } from "../../../lib/server/jarvis-brain";
 import { loadJarvisContext } from "../../../lib/server/jarvis";
-import { executeInviteMember, renderV3Proposal, renderV3Result, runJarvisAgentV3, type JarvisV3Action } from "../../../lib/server/jarvis-agent-v3";
+import { executeInviteMember, runJarvisAgentV3, type JarvisV3Action } from "../../../lib/server/jarvis-agent-v3";
+import { renderV3ProposalDetailed, renderV3ResultDetailed } from "../../../lib/server/jarvis-render-v3";
 
 export const runtime="nodejs";
 export const maxDuration=60;
@@ -36,6 +37,10 @@ async function transcribeVoice(message:any){
   const response=await fetch("https://api.openai.com/v1/audio/transcriptions",{method:"POST",headers:{Authorization:`Bearer ${key}`},body:form,signal:AbortSignal.timeout(30000),cache:"no-store"});
   if(!response.ok)throw new Error(`Transcription ${response.status}`);const data=await response.json() as {text?:string};return data.text?.trim().slice(0,5000)||null;
 }
+function sanitizeEmployeeActions(role:string,actions:JarvisV3Action[]){
+  if(role==="owner"||role==="manager")return actions;
+  return actions.map(a=>a.type==="update_task"&&a.status==="completed"?{...a,status:"review" as const}:a);
+}
 
 async function handleCallback(update:any){
   const callback=update?.callback_query;const match=typeof callback?.data==="string"?callback.data.match(/^j3:(ok|no):([0-9a-f-]{36})$/i):null;
@@ -58,7 +63,7 @@ async function handleCallback(update:any){
     }else{
       const applied=await ctx.admin.rpc("nu_jarvis_apply_action_bundle_v2",{p_actor:ctx.me.id,p_actions:actions});if(applied.error)throw applied.error;
     }
-    await ctx.admin.from("jarvis_action_bundles").delete().eq("id",bundle.id);await telegram("answerCallbackQuery",{callback_query_id:callback.id,text:"Готово"});await telegram("editMessageReplyMarkup",{chat_id:chatId,message_id:callback.message.message_id,reply_markup:{inline_keyboard:[]}});await sendRemembered(ctx,chatId,renderV3Result(ctx as any,actions));return Response.json({ok:true});
+    await ctx.admin.from("jarvis_action_bundles").delete().eq("id",bundle.id);await telegram("answerCallbackQuery",{callback_query_id:callback.id,text:"Готово"});await telegram("editMessageReplyMarkup",{chat_id:chatId,message_id:callback.message.message_id,reply_markup:{inline_keyboard:[]}});await sendRemembered(ctx,chatId,renderV3ResultDetailed(ctx as any,actions));return Response.json({ok:true});
   }catch(error:any){
     const message=String(error?.message||"");console.error("Jarvis v3 action failed",{code:error?.code||null,message:message.slice(0,200)});
     const stale=message.includes("Task changed since proposal");if(stale)await ctx.admin.from("jarvis_action_bundles").delete().eq("id",bundle.id);
@@ -95,9 +100,10 @@ export async function POST(request:Request){
   if(!agent){await send(chatId,"AI-мозг Jarvis временно недоступен. Данные я не менял. Попробуй ещё раз через несколько секунд.");return Response.json({ok:true});}
   await rememberJarvis(ctx as any,chatId,"user",message.voice?`[Голосовое] ${text}`:text);
   if(agent.mode==="reply"){await sendRemembered(ctx,chatId,agent.reply||"Не смог сформулировать ответ.",groupChat?{reply_parameters:{message_id:message.message_id,allow_sending_without_reply:true}}:{});return Response.json({ok:true});}
+  const safeActions=sanitizeEmployeeActions(ctx.me.role,agent.actions);
   await ctx.admin.from("jarvis_action_bundles").delete().eq("user_id",ctx.me.id).lt("expires_at",new Date().toISOString());
-  const saved=await ctx.admin.from("jarvis_action_bundles").insert({user_id:ctx.me.id,chat_id:chatId,actions:agent.actions}).select("id").single();
+  const saved=await ctx.admin.from("jarvis_action_bundles").insert({user_id:ctx.me.id,chat_id:chatId,actions:safeActions}).select("id").single();
   if(saved.error||!saved.data?.id){console.error("Jarvis v3 bundle save failed",{code:saved.error?.code});await sendRemembered(ctx,chatId,"Не смог подготовить подтверждение. Ничего не изменено.");return Response.json({ok:true});}
-  await sendRemembered(ctx,chatId,renderV3Proposal(ctx as any,agent.actions),{reply_markup:{inline_keyboard:[[{text:"✅ Подтвердить",callback_data:`j3:ok:${saved.data.id}`},{text:"❌ Отмена",callback_data:`j3:no:${saved.data.id}`}]]},...(groupChat?{reply_parameters:{message_id:message.message_id,allow_sending_without_reply:true}}:{})});
+  await sendRemembered(ctx,chatId,renderV3ProposalDetailed(ctx as any,safeActions),{reply_markup:{inline_keyboard:[[{text:"✅ Подтвердить",callback_data:`j3:ok:${saved.data.id}`},{text:"❌ Отмена",callback_data:`j3:no:${saved.data.id}`}]]},...(groupChat?{reply_parameters:{message_id:message.message_id,allow_sending_without_reply:true}}:{})});
   return Response.json({ok:true});
 }
