@@ -2,7 +2,7 @@ import { adminClient, appUrl, telegram, TelegramError } from "../../../lib/serve
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
-const labels: Record<string,string> = { created: "Новая задача", status: "Изменён статус", deadline: "Изменён дедлайн", changed: "Задача обновлена", comment: "Новый комментарий", deadline_requested: "Запрос переноса срока", deadline_approved: "Перенос срока согласован", deadline_rejected: "Перенос срока отклонён", reminder: "Напоминание о задаче", overdue: "Задача просрочена" };
+const labels: Record<string,string> = { created: "Новая задача", status: "Изменён статус", deadline: "Изменён дедлайн", changed: "Задача обновлена", comment: "Новый комментарий", deadline_requested: "Запрос переноса срока", deadline_approved: "Перенос срока согласован", deadline_rejected: "Перенос срока отклонён", reminder: "Напоминание о задаче", overdue: "Задача просрочена", jarvis_bundle: "Jarvis обновил задачу" };
 const statuses: Record<string,string> = { new: "Новая", accepted: "Принята", in_progress: "В работе", waiting: "Ожидание", at_risk: "Под угрозой", review: "На проверке", completed: "Завершена" };
 type Item = { id: string; lease_id: string; user_id: string; chat_id: number; task_id: string; kind: string; title: string; status: string; deadline: string; expected_result: string };
 type CheckinTask = { id:string; title:string; status:string; deadline:string; priority:string };
