@@ -2,7 +2,7 @@ import { POST as legacyPost } from "../webhook/route";
 import { sameSecret, telegram } from "../../../lib/server/telegram";
 import { clearJarvisMemory, rememberJarvis } from "../../../lib/server/jarvis-brain";
 import { loadJarvisContext } from "../../../lib/server/jarvis";
-import { renderActionProposal, renderActionResult, runJarvisAgent, type JarvisAction } from "../../../lib/server/jarvis-agent-v3";
+import { renderActionProposal, renderActionResult, runJarvisAgent, type JarvisAction } from "../../../lib/server/jarvis-agent";
 import { transcribeTelegramAudio } from "../../../lib/server/jarvis-voice";
 
 export const runtime = "nodejs";
