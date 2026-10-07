@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import HeroCarousel from "./HeroCarousel";
 import NetworkDirectory from "./NetworkDirectory";
 
 type Article = {
@@ -105,7 +106,7 @@ export default function Home() {
       </header>
 
       <section className="hero" id="top">
-        <div className="hero-media" />
+        <HeroCarousel />
         <div className="hero-shade" />
         <div className="hero-wordmark" aria-hidden="true">NU</div>
         <div className="hero-rail" aria-hidden="true"><span>НЕ УСЛОЖНЯЙ</span><span>EST. 2019</span></div>
