@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { fallbackPlaces } from "./fallback-locations";
+import heroImages from "./hero-images.json";
 
 type HeroSlide = {
   slug: string;
@@ -35,7 +36,7 @@ function normalizeSlides(input: any[]): HeroSlide[] {
       slug: String(place.slug),
       city: String(place.city),
       name: String(place.name),
-      hero_image_url: String(place.hero_image_url),
+      hero_image_url: (heroImages as Record<string, string>)[String(place.hero_image_url)] || String(place.hero_image_url),
     }));
 
   return slides.sort((a, b) => {
@@ -69,19 +70,37 @@ export default function HeroCarousel() {
       .catch(() => undefined);
   }, []);
 
+  const [paused, setPaused] = useState(true);
+  const requestId = useRef(0);
+
   useEffect(() => {
-    if (slides.length < 2 || typeof window === "undefined") return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const sync = () => setPaused(preference.matches);
+    sync();
+    preference.addEventListener("change", sync);
+    return () => preference.removeEventListener("change", sync);
+  }, []);
 
-    const interval = window.setInterval(() => {
-      setActiveIndex((current) => {
-        setPreviousIndex(current);
-        return (current + 1) % slides.length;
-      });
-    }, 4800);
+  const showSlide = useCallback((index: number) => {
+    if (slides.length < 2) return;
+    const nextIndex = (index + slides.length) % slides.length;
+    const request = ++requestId.current;
+    const image = new Image();
+    image.onload = () => {
+      if (request !== requestId.current) return;
+      setPreviousIndex(activeIndex);
+      setActiveIndex(nextIndex);
+    };
+    image.src = slides[nextIndex].hero_image_url;
+  }, [activeIndex, slides]);
 
-    return () => window.clearInterval(interval);
-  }, [slides.length]);
+  useEffect(() => {
+    if (paused || slides.length < 2) return;
+    const timer = window.setInterval(() => showSlide(activeIndex + 1), 4800);
+    return () => window.clearInterval(timer);
+  }, [activeIndex, paused, showSlide, slides.length]);
+
+  useEffect(() => () => { requestId.current += 1; }, [slides]);
 
   useEffect(() => {
     if (previousIndex == null) return;
@@ -102,7 +121,7 @@ export default function HeroCarousel() {
   const indexLabel = String(activeIndex + 1).padStart(2, "0");
   const countLabel = String(count).padStart(2, "0");
 
-  const alt = useMemo(() => `${active.city}, ${active.name} · Не Усложняй`, [active]);
+  const alt = active ? `${active.city}, ${active.name} · Не Усложняй` : "";
 
   if (!active) return <div className="hero-media" />;
 
@@ -127,11 +146,16 @@ export default function HeroCarousel() {
         height={1080}
         fetchPriority={activeIndex === 0 ? "high" : "auto"}
       />
-      <div className="hero-carousel-meta" aria-live="polite">
+      <div className="hero-carousel-meta" aria-live={paused ? "polite" : "off"}>
         <span>{active.city}</span>
         <strong>{active.name}</strong>
         <small>{indexLabel} / {countLabel}</small>
       </div>
+      {count > 1 && <div className="hero-carousel-controls" aria-label="Управление фотографиями">
+        <button type="button" aria-label="Предыдущее фото" onClick={() => { setPaused(true); showSlide(activeIndex - 1); }}>←</button>
+        <button type="button" aria-label={paused ? "Запустить смену фото" : "Приостановить смену фото"} onClick={() => setPaused(!paused)}>{paused ? "▶" : "Ⅱ"}</button>
+        <button type="button" aria-label="Следующее фото" onClick={() => { setPaused(true); showSlide(activeIndex + 1); }}>→</button>
+      </div>}
     </div>
   );
 }
