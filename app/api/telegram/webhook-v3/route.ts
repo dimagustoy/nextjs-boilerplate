@@ -1,5 +1,5 @@
-import { POST as legacyPost } from "../webhook/route";
-import { sameSecret, telegram } from "../../../lib/server/telegram";
+import { POST as v2Post } from "../webhook-v2/route";
+import { appUrl, sameSecret, telegram } from "../../../lib/server/telegram";
 import { clearJarvisMemory, rememberJarvis } from "../../../lib/server/jarvis-brain";
 import { loadJarvisContext } from "../../../lib/server/jarvis";
 import { executeInviteMember, renderV3Proposal, renderV3Result, runJarvisAgentV3, type JarvisV3Action } from "../../../lib/server/jarvis-agent-v3";
@@ -54,7 +54,7 @@ async function handleCallback(update:any){
   }
   try{
     if(actions.length===1&&actions[0].type==="invite_member"){
-      const origin=process.env.APP_URL||new URL(callback.message?.chat?"https://placeholder.local":"https://placeholder.local").origin;await executeInviteMember(ctx as any,actions[0],origin);
+      await executeInviteMember(ctx as any,actions[0],appUrl());
     }else{
       const applied=await ctx.admin.rpc("nu_jarvis_apply_action_bundle_v2",{p_actor:ctx.me.id,p_actions:actions});if(applied.error)throw applied.error;
     }
@@ -68,19 +68,19 @@ async function handleCallback(update:any){
 }
 
 export async function POST(request:Request){
-  const legacyRequest=request.clone();if(!sameSecret(request.headers.get("x-telegram-bot-api-secret-token"),process.env.TELEGRAM_WEBHOOK_SECRET))return Response.json({error:"Forbidden"},{status:403});
-  let update:any;try{update=await request.json();}catch{return legacyPost(legacyRequest);}
-  const cb=await handleCallback(update);if(cb)return cb;
+  const v2Request=request.clone();if(!sameSecret(request.headers.get("x-telegram-bot-api-secret-token"),process.env.TELEGRAM_WEBHOOK_SECRET))return Response.json({error:"Forbidden"},{status:403});
+  let update:any;try{update=await request.json();}catch{return v2Post(v2Request);}
+  if(update?.callback_query){const cb=await handleCallback(update);if(cb)return cb;return v2Post(v2Request);}
   const message=update?.message;const type=message?.chat?.type;const privateChat=type==="private";const groupChat=isGroup(type);const chatId=message?.chat?.id;const actorId=message?.from?.id;
   if(!message||message.from?.is_bot||(!privateChat&&!groupChat)||!Number.isSafeInteger(chatId)||!Number.isSafeInteger(actorId)||actorId<=0)return Response.json({ok:true});if(privateChat&&chatId!==actorId)return Response.json({ok:true});
 
   const rawText=typeof message.text==="string"?message.text.trim():"";const group=groupChat?groupCommand(rawText):{explicit:true,text:rawText};
   if(groupChat&&!group.explicit)return Response.json({ok:true});
-  if(privateChat&&/^\/start(?:@[A-Za-z0-9_]+)?(?:\s+|$)/i.test(rawText))return legacyPost(legacyRequest);
+  if(privateChat&&/^\/start(?:@[A-Za-z0-9_]+)?(?:\s+|$)/i.test(rawText))return v2Post(v2Request);
   const ctx=await loadJarvisContext(actorId);if(!ctx){await send(chatId,groupChat?"Сначала подключи свой Telegram к NU TEAM в личном чате с ботом.":"Открой NU TEAM → Telegram → «Подключить», затем перейди по персональной ссылке.");return Response.json({ok:true});}
 
   if(privateChat&&Number.isSafeInteger(message.reply_to_message?.message_id)){
-    const check=await ctx.admin.from("telegram_checkin_sessions").select("id").eq("user_id",ctx.me.id).eq("message_id",message.reply_to_message.message_id).eq("state","awaiting").maybeSingle();if(check.data)return legacyPost(legacyRequest);
+    const check=await ctx.admin.from("telegram_checkin_sessions").select("id").eq("user_id",ctx.me.id).eq("message_id",message.reply_to_message.message_id).eq("state","awaiting").maybeSingle();if(check.data)return v2Post(v2Request);
   }
 
   let text=group.text;
