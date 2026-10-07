@@ -3,6 +3,7 @@ import { appUrl, sameSecret, telegram } from "../../../lib/server/telegram";
 import { clearJarvisMemory, rememberJarvis } from "../../../lib/server/jarvis-brain";
 import { loadJarvisContext } from "../../../lib/server/jarvis";
 import { executeInviteMember, runJarvisAgentV3, type JarvisV3Action } from "../../../lib/server/jarvis-agent-v3";
+import { hasExplicitWriteIntent, jarvisRateAllowed } from "../../../lib/server/jarvis-guard-v3";
 import { describeTelegramPhoto } from "../../../lib/server/jarvis-media";
 import { sanitizeV3Actions } from "../../../lib/server/jarvis-permissions-v3";
 import { renderV3ProposalDetailed, renderV3ResultDetailed } from "../../../lib/server/jarvis-render-v3";
@@ -82,6 +83,7 @@ export async function POST(request:Request){
   if(groupChat&&!group.explicit)return Response.json({ok:true});
   if(privateChat&&/^\/start(?:@[A-Za-z0-9_]+)?(?:\s+|$)/i.test(rawText))return v2Post(v2Request);
   const ctx=await loadJarvisContext(actorId);if(!ctx){await send(chatId,groupChat?"Сначала подключи свой Telegram к NU TEAM в личном чате с ботом.":"Открой NU TEAM → Telegram → «Подключить», затем перейди по персональной ссылке.");return Response.json({ok:true});}
+  if(!(await jarvisRateAllowed(ctx as any))){await send(chatId,"Слишком много запросов подряд. Подожди минуту: я ограничиваю частоту, чтобы один чат случайно не съел весь AI-бюджет.");return Response.json({ok:true});}
 
   if(privateChat&&Number.isSafeInteger(message.reply_to_message?.message_id)){
     const check=await ctx.admin.from("telegram_checkin_sessions").select("id").eq("user_id",ctx.me.id).eq("message_id",message.reply_to_message.message_id).eq("state","awaiting").maybeSingle();if(check.data)return v2Post(v2Request);
@@ -105,6 +107,8 @@ export async function POST(request:Request){
   if(!agent){await send(chatId,"AI-мозг Jarvis временно недоступен. Данные я не менял. Попробуй ещё раз через несколько секунд.");return Response.json({ok:true});}
   await rememberJarvis(ctx as any,chatId,"user",message.voice?`[Голосовое] ${text}`:Array.isArray(message.photo)&&message.photo.length?`[Изображение] ${text}`:text);
   if(agent.mode==="reply"){await sendRemembered(ctx,chatId,agent.reply||"Не смог сформулировать ответ.",groupChat?{reply_parameters:{message_id:message.message_id,allow_sending_without_reply:true}}:{});return Response.json({ok:true});}
+  const continuation=/^\s*(тогда|да|ок|хорошо)\b/i.test(text);
+  if(!hasExplicitWriteIntent(text)&&!context&&!continuation){await sendRemembered(ctx,chatId,"Я вижу возможное изменение, но ты прямо не просил менять данные. Ничего не записал. Если хочешь действие, сформулируй его как поручение.");return Response.json({ok:true});}
   const safeActions=sanitizeV3Actions(ctx as any,agent.actions);
   if(!safeActions.length){await sendRemembered(ctx,chatId,"По твоей роли это изменение недоступно. Данные не менял.");return Response.json({ok:true});}
   await ctx.admin.from("jarvis_action_bundles").delete().eq("user_id",ctx.me.id).lt("expires_at",new Date().toISOString());
