@@ -1,1 +1,15 @@
 .hero-carousel{position:absolute;inset:0;overflow:hidden;background:#0b0b0b!important;filter:none!important}.hero-carousel-image{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center center;display:block}.hero-carousel-previous{z-index:0}.hero-carousel-current{z-index:1;animation:hero-carousel-fade 1.25s ease both}.hero-carousel:after{content:"";position:absolute;inset:0;z-index:2;background:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.08));pointer-events:none}.hero-carousel-meta{position:absolute;right:34px;bottom:28px;z-index:3;display:grid;grid-template-columns:auto auto;grid-template-areas:"city count" "name count";column-gap:18px;row-gap:2px;align-items:end;text-align:right;color:#fff;text-shadow:0 2px 14px rgba(0,0,0,.45);pointer-events:none}.hero-carousel-meta span{grid-area:city;font-size:9px;line-height:1;text-transform:uppercase;letter-spacing:.18em;color:rgba(255,255,255,.68)}.hero-carousel-meta strong{grid-area:name;font-size:14px;line-height:1.1;letter-spacing:-.02em}.hero-carousel-meta small{grid-area:count;align-self:center;font-size:10px;letter-spacing:.14em;color:rgba(255,255,255,.55);border-left:1px solid rgba(255,255,255,.25);padding-left:16px}@keyframes hero-carousel-fade{from{opacity:0;transform:scale(1.018)}to{opacity:1;transform:scale(1)}}@media(max-width:760px){.hero-carousel-image{object-position:center center}.hero-carousel-meta{right:20px;bottom:18px;column-gap:12px}.hero-carousel-meta strong{font-size:12px}.hero-carousel-meta small{font-size:9px;padding-left:10px}}@media(prefers-reduced-motion:reduce){.hero-carousel-current{animation:none}}
+
+/* Keep controls above the decorative overlays and within the viewport. */
+.hero .hero-carousel{transform:none}
+.hero-carousel-controls{position:absolute;right:34px;bottom:70px;z-index:5;display:flex;gap:8px;pointer-events:auto}
+.hero-carousel-controls button{width:44px;height:44px;border:1px solid rgba(255,255,255,.5);border-radius:50%;background:rgba(0,0,0,.55);color:#fff;cursor:pointer}
+.hero-carousel-controls button:hover,.hero-carousel-controls button:focus-visible{background:#f08a00;color:#111;outline:2px solid #fff;outline-offset:3px}
+.hero .hero-shade,.hero .hero-wordmark,.hero .hero-stamp,.hero .hero-rail,.hero .scroll-note{pointer-events:none}
+.hero .hero-carousel{z-index:1}
+.hero .hero-shade{z-index:2}
+.hero .hero-copy{z-index:3;pointer-events:none}
+.hero .hero-copy a{pointer-events:auto}
+.hero .hero-stamp{bottom:160px}
+.hero .scroll-note{display:none}
+@media(max-width:760px){.hero-carousel-controls{right:20px;bottom:65px}.hero .hero-copy{padding-bottom:160px}.hero .hero-stamp{display:none}}
