@@ -79,6 +79,12 @@ function byPeople(ctx: Context, tasks: Task[], now: number) {
 
 export function renderExecutiveAttention(ctx: Context, rawText: string): string | null {
   const text = norm(rawText);
+  // Executive shortcuts are read-only. If a phrase contains an action request,
+  // let the AI brain interpret it first instead of hijacking it because it also
+  // mentions words such as "просрочка".
+  const actionLike = /(постав|созда|поруч|назнач|добав|перенес|измени|помен|закрой|заверш|отмет|обнов|убер|удал|сформулиру|разбер)/i.test(text);
+  if (actionLike) return null;
+
   const asksAttention = text.includes("что горит") || text.includes("горящие") || text.includes("критичные") || text.includes("по сотрудникам") || text.includes("просроч");
   if (!asksAttention) return null;
 
