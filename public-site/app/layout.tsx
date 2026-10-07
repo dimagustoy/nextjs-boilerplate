@@ -7,7 +7,6 @@ import "./atmosphere-v3.css";
 import "./progressive-directory.css";
 import "./network-native.css";
 import "./hero-carousel.css";
-import JournalSourceLinks from "./JournalSourceLinks";
 
 export const metadata: Metadata = {
   title: "Не Усложняй — места, люди, истории",
@@ -17,7 +16,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="ru">
-      <body>{children}<JournalSourceLinks /></body>
+      <body>{children}</body>
     </html>
   );
 }
