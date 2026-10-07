@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     }
 
     await telegram("setWebhook", {
-      url: `${appUrl()}/api/telegram/webhook-v2`,
+      url: `${appUrl()}/api/telegram/webhook-v3`,
       secret_token: secret,
       allowed_updates: ["message", "callback_query"],
       max_connections: 2,
