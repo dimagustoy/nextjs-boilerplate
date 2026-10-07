@@ -12,31 +12,19 @@ type Article = {
   category: string;
   cover_image_url?: string | null;
   published_at?: string | null;
+  source_url?: string | null;
+  source_type?: string | null;
 };
 
-const fallbackArticles: Article[] = [
-  {
-    slug: "brand-story",
-    title: "Не усложнять — это не про делать меньше",
-    excerpt: "Как из одной идеи выросла сеть, которая остаётся местом для своих.",
-    category: "brand",
-    cover_image_url: "https://images.unsplash.com/photo-1528605248644-14dd04022da1?auto=format&fit=crop&w=1600&q=88",
-  },
-  {
-    slug: "gagarin-opening",
-    title: "Гагарин: новый формат внутри знакомого NU",
-    excerpt: "Больше пространства, новая кухня и ещё один повод не ехать домой слишком рано.",
-    category: "openings",
-    cover_image_url: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1400&q=88",
-  },
-  {
-    slug: "people-of-nu",
-    title: "Люди, из-за которых место становится своим",
-    excerpt: "Истории команды и гостей, которые делают «Не Усложняй» живым брендом, а не вывеской.",
-    category: "people",
-    cover_image_url: "https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=1400&q=88",
-  },
-];
+function articleSource(value?: string | null) {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "http:" ? url.href : null;
+  } catch {
+    return null;
+  }
+}
 
 const categoryLabel: Record<string, string> = {
   news: "Новости",
@@ -48,7 +36,7 @@ const categoryLabel: Record<string, string> = {
 };
 
 export default function Home() {
-  const [articles, setArticles] = useState<Article[]>(fallbackArticles);
+  const [articles, setArticles] = useState<Article[]>([]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [leadState, setLeadState] = useState<"idle" | "loading" | "success" | "error">("idle");
 
@@ -58,14 +46,11 @@ export default function Home() {
         const res = await fetch("/api/content", { cache: "no-store" });
         if (!res.ok) return;
         const data = await res.json();
-        if (Array.isArray(data.articles) && data.articles.length) {
-          const liveArticles = data.articles as Article[];
-          const liveSlugs = new Set(liveArticles.map((article) => article.slug));
-          const fillers = fallbackArticles.filter((article) => !liveSlugs.has(article.slug));
-          setArticles([...liveArticles, ...fillers].slice(0, 3));
+        if (Array.isArray(data.articles)) {
+          setArticles(data.articles.slice(0, 3));
         }
       } catch {
-        // Fallback stories keep the journal alive before CMS content is filled.
+        // Only published CMS stories belong in the journal.
       }
     }
     loadCms();
@@ -73,8 +58,10 @@ export default function Home() {
 
   async function submitLead(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (leadState === "loading") return;
+    const formElement = event.currentTarget;
     setLeadState("loading");
-    const form = new FormData(event.currentTarget);
+    const form = new FormData(formElement);
     const payload = Object.fromEntries(form.entries());
 
     try {
@@ -85,7 +72,7 @@ export default function Home() {
       });
       if (!response.ok) throw new Error("failed");
       setLeadState("success");
-      event.currentTarget.reset();
+      formElement.reset();
     } catch {
       setLeadState("error");
     }
@@ -155,18 +142,23 @@ export default function Home() {
           <div><p className="eyebrow">Сейчас в NU</p><h2>ЖУРНАЛ</h2></div>
           <div className="journal-side-copy"><p className="section-intro">События, люди, открытия, еда и истории. Не корпоративные новости, а жизнь бренда.</p><span>NU / STORIES / NOW</span></div>
         </div>
+        {articles.length === 0 && <p className="section-intro">Новые публикации появятся после запуска журнала.</p>}
         <div className="article-grid">
           {articles.slice(0, 3).map((article, index) => (
             <article className={index === 0 ? "article-card article-main" : "article-card"} key={article.slug}>
               <div className="article-image">
-                <img src={article.cover_image_url || fallbackArticles[index % fallbackArticles.length].cover_image_url!} alt={article.title} />
+                {article.cover_image_url && <img src={article.cover_image_url} alt={article.title} loading="lazy" />}
                 <span className="article-number">0{index + 1}</span>
               </div>
               <div className="article-copy">
                 <span>{categoryLabel[article.category] || article.category}</span>
                 <h3>{article.title}</h3>
                 <p>{article.excerpt}</p>
-                <a href={`#story-${article.slug}`}>Читать историю ↗</a>
+                {articleSource(article.source_url) && (
+                  <a href={articleSource(article.source_url)!} target="_blank" rel="noopener noreferrer">
+                    {article.source_type === "telegram" ? "Читать в Telegram ↗" : "Читать историю ↗"}
+                  </a>
+                )}
               </div>
             </article>
           ))}
@@ -195,10 +187,10 @@ export default function Home() {
         <form className="lead-form" onSubmit={submitLead}>
           <p className="form-kicker">НЕ УСЛОЖНЯЙ · ФРАНШИЗА</p>
           <h3>Поговорим о городе</h3>
-          <input name="full_name" placeholder="Имя" required minLength={2} />
-          <input name="phone" placeholder="Телефон" required minLength={5} />
-          <input name="city" placeholder="Город" required minLength={2} />
-          <select name="budget" defaultValue="">
+          <input name="full_name" aria-label="Имя" autoComplete="name" placeholder="Имя" required minLength={2} />
+          <input name="phone" type="tel" aria-label="Телефон" autoComplete="tel" placeholder="Телефон" required minLength={5} />
+          <input name="city" aria-label="Город" autoComplete="address-level2" placeholder="Город" required minLength={2} />
+          <select name="budget" aria-label="Бюджет на запуск" defaultValue="">
             <option value="" disabled>Бюджет на запуск</option>
             <option>до 5 млн ₽</option>
             <option>5–10 млн ₽</option>
@@ -209,8 +201,8 @@ export default function Home() {
           <button className="button button-orange" disabled={leadState === "loading"}>
             {leadState === "loading" ? "Отправляем…" : "Получить информацию"}
           </button>
-          {leadState === "success" && <p className="form-success">Заявка отправлена. Свяжемся с тобой.</p>}
-          {leadState === "error" && <p className="form-error">Не получилось отправить. Попробуй ещё раз.</p>}
+          {leadState === "success" && <p className="form-success" role="status">Заявка отправлена. Свяжемся с тобой.</p>}
+          {leadState === "error" && <p className="form-error" role="alert">Не получилось отправить. Попробуй ещё раз.</p>}
           <small>Нажимая кнопку, вы соглашаетесь на обработку персональных данных.</small>
         </form>
       </section>
