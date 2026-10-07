@@ -1,7 +1,12 @@
 "use client";
 
+import VenueAmenities from "./VenueAmenities";
+
 import { useEffect, useMemo, useState } from "react";
 import { fallbackPlaces, type FallbackPlace } from "./fallback-locations";
+
+import VenueContacts from "./VenueContacts";
+import VenueRatings from "./VenueRatings";
 
 type Place = FallbackPlace;
 
@@ -32,15 +37,16 @@ function PlaceCard({ place }: { place: Place }) {
             <h3>{place.name}</h3>
           </div>
           <div className="network-ratings">
-            {place.rating_2gis != null && <span><b>{Number(place.rating_2gis).toFixed(1)}</b> 2ГИС</span>}
-            {place.rating_yandex != null && <span><b>{Number(place.rating_yandex).toFixed(1)}</b> Яндекс</span>}
+            <VenueRatings place={place} />
           </div>
         </div>
 
         <p className="network-address">{place.address || "Адрес добавляем"}</p>
         {place.short_description && <p className="network-description">{place.short_description}</p>}
 
+        <VenueAmenities place={place} />
         <div className="network-card-actions">
+          <VenueContacts place={place} />
           <a className="network-primary" href={`/places/${place.slug}`}>Смотреть место →</a>
           {place.phone && <a href={`tel:${place.phone.replace(/[^+\d]/g, "")}`}>Позвонить</a>}
           {place.two_gis_url && <a href={place.two_gis_url} target="_blank" rel="noreferrer">2ГИС ↗</a>}
@@ -121,7 +127,7 @@ export default function NetworkDirectory() {
             const id = `network-city-choice-${index}`;
             return (
               <input
-                key={id}
+                key={group.name}
                 className="network-city-radio"
                 id={id}
                 type="radio"
