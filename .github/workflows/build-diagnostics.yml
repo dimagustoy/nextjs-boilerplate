@@ -29,3 +29,18 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+      - name: Start and smoke test
+        run: |
+          npm run start > /tmp/nuos.log 2>&1 &
+          pid=$!
+          for i in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:3000/api/health >/tmp/health.json; then
+              cat /tmp/health.json
+              kill $pid
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/nuos.log
+          kill $pid || true
+          exit 1
