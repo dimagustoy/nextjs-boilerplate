@@ -1,0 +1,129 @@
+{
+  "checked_at": "2026-10-07",
+  "locations": [
+    {
+      "slug": "ekb-turgeneva-22",
+      "opening_hours": [
+        "ВС–ЧТ · 12:00–01:00",
+        "ПТ–СБ · 12:00–02:00"
+      ],
+      "source": "https://yandex.ru/maps/org/ne_uslozhnyay/101456267833/"
+    },
+    {
+      "slug": "ekb-tatishcheva-47a",
+      "opening_hours": [
+        "ВС–ЧТ · 12:00–01:00",
+        "ПТ–СБ · 12:00–02:00"
+      ],
+      "source": "https://yandex.ru/maps/org/ne_uslozhnyay/77426002680/"
+    },
+    {
+      "slug": "ekb-chkalova-258",
+      "opening_hours": [
+        "ВС–ЧТ · 12:00–01:00",
+        "ПТ–СБ · 12:00–02:00"
+      ],
+      "source": "https://yandex.ru/maps/org/ne_uslozhnyay/158490602921/"
+    },
+    {
+      "slug": "ekb-beloglazova-2g",
+      "opening_hours": [
+        "ВС–ЧТ · 12:00–01:00",
+        "ПТ–СБ · 12:00–03:00"
+      ],
+      "source": "https://yandex.ru/maps/org/ne_uslozhnyay_gagarin/87822749042/"
+    },
+    {
+      "slug": "astrakhan-fioletova-8",
+      "opening_hours": [
+        "ВС–ЧТ · 12:00–02:00",
+        "ПТ–СБ · 12:00–03:00"
+      ],
+      "source": "https://yandex.ru/maps/org/ne_uslozhnyay/229334912826/"
+    },
+    {
+      "slug": "bryansk-ulyanova-123a",
+      "opening_hours": [
+        "ВС–ЧТ · 14:00–02:00",
+        "ПТ–СБ · 14:00–03:00"
+      ],
+      "source": "https://yandex.ru/maps/org/ne_uslozhnyay/42588204440/"
+    },
+    {
+      "slug": "ivanovo-gromoboya-15a",
+      "opening_hours": [
+        "ПН–ПТ · 12:00–01:00",
+        "СБ · 14:00–03:00",
+        "ВС · 14:00–01:00"
+      ],
+      "source": "https://yandex.ru/maps/org/ne_uslozhnyay_lounge/29832231037/"
+    },
+    {
+      "slug": "irkutsk-uritskogo-7a",
+      "opening_hours": [
+        "ПН–ЧТ · 10:00–00:00",
+        "ПТ–СБ · 10:00–02:00",
+        "ВС · 12:00–00:00"
+      ],
+      "source": "https://yandex.ru/maps/org/ne_uslozhnyay/178194522639/"
+    },
+    {
+      "slug": "kazan-karbysheva-40a",
+      "opening_hours": [
+        "ВС–ЧТ · 12:00–01:00",
+        "ПТ–СБ · 12:00–03:00"
+      ],
+      "source": "https://yandex.ru/maps/org/ne_uslozhnyay/24179758068/"
+    },
+    {
+      "slug": "kostroma-gornaya-27a",
+      "opening_hours": [
+        "ВС–ЧТ · 10:00–02:00",
+        "ПТ–СБ · 10:00–04:00"
+      ],
+      "source": "https://yandex.ru/maps/org/ne_uslozhnyay/125760642636/"
+    },
+    {
+      "slug": "petrozavodsk-pervomayskiy-4b",
+      "opening_hours": [
+        "ПН–ЧТ · 13:00–01:00",
+        "ПТ · 13:00–02:00",
+        "СБ · 15:00–02:00",
+        "ВС · 15:00–01:00"
+      ],
+      "source": "https://yandex.ru/maps/org/nu/60958572346/"
+    },
+    {
+      "slug": "samara-karla-marksa-196",
+      "opening_hours": [
+        "ВС–ЧТ · 14:00–02:00",
+        "ПТ–СБ · 14:00–03:00"
+      ],
+      "source": "https://yandex.ru/maps/org/ne_uslozhnyay/192529701135/"
+    },
+    {
+      "slug": "samara-fadeeva-42v",
+      "opening_hours": [
+        "ВС–ЧТ · 14:00–02:00",
+        "ПТ–СБ · 14:00–03:00"
+      ],
+      "source": "https://yandex.ru/maps/org/ne_uslozhnyay/52363958816/"
+    },
+    {
+      "slug": "tyumen-volodarskogo-14",
+      "opening_hours": [
+        "ВС–ЧТ · 12:00–01:00",
+        "ПТ–СБ · 12:00–02:00"
+      ],
+      "source": "https://yandex.ru/maps/org/ne_uslozhnyay/110262969650/"
+    },
+    {
+      "slug": "yaroslavl-deputatskiy-2",
+      "opening_hours": [
+        "ВС–ЧТ · 12:00–01:00",
+        "ПТ–СБ · 12:00–03:00"
+      ],
+      "source": "https://yandex.ru/maps/org/ne_uslozhnyay/117496707111/"
+    }
+  ]
+}
