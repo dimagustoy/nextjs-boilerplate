@@ -21,7 +21,7 @@ async function getPlace(slug: string) {
     if (data) return data;
   }
   const fallback = fallbackPlaces.find((place) => place.slug === slug);
-  return fallback ? { ...fallback, gallery_urls: [], messenger_url: null } : null;
+  return fallback ? { ...fallback, gallery_urls: fallback.gallery_urls || [], messenger_url: null } : null;
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {

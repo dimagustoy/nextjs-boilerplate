@@ -108,7 +108,7 @@ export default function NetworkDirectory() {
           <h2>{places.length} МЕСТ.<br />{grouped.length} ГОРОДОВ.</h2>
         </div>
         <div className="network-head-copy">
-          <p className="section-intro">Выбирай город, смотри пространство и сразу строй маршрут. Никакой карты, только реальные места, фото и контакты.</p>
+          <p className="section-intro">Выбирай город, смотри пространство и сразу строй маршрут.</p>
           <span>{cmsReady ? "Актуальные данные из NU OS" : "Резервный снимок сети · NU OS обновит его автоматически"}</span>
         </div>
       </div>
