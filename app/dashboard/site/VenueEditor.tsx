@@ -6,6 +6,7 @@ import { supabase } from "../../lib/supabase";
 const linkFields = [
   ["telegram_channel_url", "Telegram-канал", "https://t.me/channel"],
   ["vk_group_url", "Группа ВКонтакте", "https://vk.com/group"],
+  ["instagram_url", "Instagram", "https://www.instagram.com/profile/"],
   ["booking_telegram_url", "Бронирование · Telegram", "https://t.me/contact"],
   ["booking_max_url", "Бронирование · MAX", "https://max.ru/…"],
   ["booking_whatsapp_url", "Бронирование · WhatsApp", "https://wa.me/…"],

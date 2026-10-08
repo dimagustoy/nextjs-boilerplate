@@ -17,7 +17,7 @@ export async function GET() {
   const [locationsResult, articlesResult] = await Promise.all([
     supabase
       .from("site_locations")
-      .select("id,slug,city,name,address,phone,short_description,hero_image_url,two_gis_url,yandex_maps_url,rating_2gis,rating_yandex,opening_hours,sort_order,telegram_channel_url,vk_group_url,booking_telegram_url,booking_max_url,booking_whatsapp_url,has_kitchen,has_spirits,has_beer,has_console")
+      .select("id,slug,city,name,address,phone,short_description,hero_image_url,two_gis_url,yandex_maps_url,rating_2gis,rating_yandex,opening_hours,sort_order,telegram_channel_url,vk_group_url,instagram_url,booking_telegram_url,booking_max_url,booking_whatsapp_url,has_kitchen,has_spirits,has_beer,has_console")
       .eq("is_published", true)
       .order("sort_order", { ascending: true }),
     supabase
