@@ -8,6 +8,7 @@ const linkFields = [
   ["vk_group_url", "Группа ВКонтакте", "https://vk.com/group"],
   ["instagram_url", "Instagram", "https://www.instagram.com/profile/"],
   ["booking_telegram_url", "Бронирование · Telegram", "https://t.me/contact"],
+  ["booking_website_url", "Бронирование · сайт", "https://venue.example/"],
   ["booking_max_url", "Бронирование · MAX", "https://max.ru/…"],
   ["booking_whatsapp_url", "Бронирование · WhatsApp", "https://wa.me/…"],
   ["yandex_maps_url", "Карточка в Яндекс Картах", "https://yandex.ru/maps/org/…"],

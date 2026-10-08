@@ -1,0 +1,27 @@
+{
+  "slug": "kazan-karbysheva-40a",
+  "name": "Лаунж-бар «Не усложняй»",
+  "city": "Казань",
+  "address": "ул. Карбышева, 40А",
+  "phone": "+7 953 484-86-01",
+  "booking_telegram_url": "https://t.me/nukzn_bot",
+  "booking_website_url": "https://nukzn.ru/",
+  "has_kitchen": true,
+  "has_spirits": true,
+  "has_beer": true,
+  "has_console": true,
+  "short_description": "Лаунж-бар «Не усложняй» в Казани. Пиццы, сэндвичи, десерты и снеки. Есть крепкий алкоголь.",
+  "hero_image_url": "/venues/kazan/01.webp",
+  "gallery_urls": [
+    "/venues/kazan/01.webp",
+    "/venues/kazan/02.webp",
+    "/venues/kazan/03.webp",
+    "/venues/kazan/04.webp",
+    "/venues/kazan/05.webp",
+    "/venues/kazan/06.webp",
+    "/venues/kazan/07.webp",
+    "/venues/kazan/08.webp",
+    "/venues/kazan/09.webp",
+    "/venues/kazan/10.webp"
+  ]
+}
