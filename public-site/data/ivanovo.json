@@ -1,0 +1,33 @@
+{
+  "slug": "ivanovo-gromoboya-15a",
+  "name": "Не усложняй Иваново",
+  "city": "Иваново",
+  "address": "ул. Громобоя, 15А",
+  "phone": "+7 910 956-33-03",
+  "booking_vk_url": "https://vk.ru/ivanovo_nu",
+  "vk_group_url": "https://vk.ru/ivanovo_nu",
+  "telegram_channel_url": "https://t.me/neyslozhnay",
+  "instagram_url": "https://www.instagram.com/ivanovo_nu/",
+  "booking_max_url": null,
+  "booking_whatsapp_url": null,
+  "booking_telegram_url": null,
+  "booking_website_url": null,
+  "has_kitchen": true,
+  "has_spirits": true,
+  "has_beer": true,
+  "has_console": true,
+  "short_description": "Не усложняй в Иваново. Есть кухня и крепкий алкоголь. Бронирование через сообщество ВКонтакте. MAX: +7 910 956-33-03.",
+  "hero_image_url": "/venues/ivanovo/01.webp",
+  "gallery_urls": [
+    "/venues/ivanovo/01.webp",
+    "/venues/ivanovo/02.webp",
+    "/venues/ivanovo/03.webp",
+    "/venues/ivanovo/04.webp",
+    "/venues/ivanovo/05.webp",
+    "/venues/ivanovo/06.webp",
+    "/venues/ivanovo/07.webp",
+    "/venues/ivanovo/08.webp",
+    "/venues/ivanovo/09.webp",
+    "/venues/ivanovo/10.webp"
+  ]
+}
