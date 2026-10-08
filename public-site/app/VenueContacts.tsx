@@ -3,6 +3,7 @@ export type VenueContactFields = {
   vk_group_url?: string | null;
   instagram_url?: string | null;
   booking_telegram_url?: string | null;
+  booking_website_url?: string | null;
   booking_max_url?: string | null;
   booking_whatsapp_url?: string | null;
 };
@@ -11,6 +12,7 @@ const contacts = [
   ["booking_telegram_url", "Написать в Telegram"],
   ["booking_max_url", "Написать в MAX"],
   ["booking_whatsapp_url", "Написать в WhatsApp"],
+  ["booking_website_url", "Бронировать на сайте"],
   ["telegram_channel_url", "Telegram-канал"],
   ["vk_group_url", "Группа ВКонтакте"],
   ["instagram_url", "Instagram"],
