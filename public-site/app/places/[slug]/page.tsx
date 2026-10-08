@@ -14,7 +14,7 @@ async function getPlace(slug: string) {
     const supabase = createClient(url, key, { auth: { persistSession: false } });
     const { data } = await supabase
       .from("site_locations")
-      .select("slug,city,name,address,phone,short_description,hero_image_url,gallery_urls,two_gis_url,yandex_maps_url,messenger_url,rating_2gis,rating_yandex,opening_hours,telegram_channel_url,vk_group_url,booking_telegram_url,booking_max_url,booking_whatsapp_url,has_kitchen,has_spirits,has_beer,has_console")
+      .select("slug,city,name,address,phone,short_description,hero_image_url,gallery_urls,two_gis_url,yandex_maps_url,messenger_url,rating_2gis,rating_yandex,opening_hours,telegram_channel_url,vk_group_url,instagram_url,booking_telegram_url,booking_max_url,booking_whatsapp_url,has_kitchen,has_spirits,has_beer,has_console")
       .eq("slug", slug)
       .eq("is_published", true)
       .maybeSingle();

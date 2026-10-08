@@ -1,0 +1,57 @@
+[
+  {
+    "name": "Не усложняй",
+    "city": "Самара",
+    "has_console": true,
+    "has_spirits": false,
+    "has_beer": true,
+    "telegram_channel_url": "https://t.me/nu_smr",
+    "vk_group_url": "https://vk.ru/nu_smr",
+    "instagram_url": "https://www.instagram.com/nu_smr/",
+    "slug": "samara-karla-marksa-196",
+    "address": "пр. Карла Маркса, 196",
+    "phone": "+7 (917) 165-10-55",
+    "booking_telegram_url": "https://t.me/nu_smr1",
+    "booking_max_url": "https://max.ru/u/f9LHodD0cOIPCGznB4S0qK__krgFXYLSHRKD3pqXA0odeaGTJSel8YgarIs",
+    "has_kitchen": false,
+    "short_description": "Не усложняй на Карла Маркса. Место для встреч, компании и неспешного вечера. Из алкоголя — пиво.",
+    "hero_image_url": "/venues/samara-marksa/01.webp",
+    "gallery_urls": [
+      "/venues/samara-marksa/01.webp",
+      "/venues/samara-marksa/02.webp",
+      "/venues/samara-marksa/03.webp",
+      "/venues/samara-marksa/04.webp",
+      "/venues/samara-marksa/05.webp",
+      "/venues/samara-marksa/06.webp"
+    ]
+  },
+  {
+    "name": "Не усложняй",
+    "city": "Самара",
+    "has_console": true,
+    "has_spirits": false,
+    "has_beer": true,
+    "telegram_channel_url": "https://t.me/nu_smr",
+    "vk_group_url": "https://vk.ru/nu_smr",
+    "instagram_url": "https://www.instagram.com/nu_smr/",
+    "slug": "samara-fadeeva-42v",
+    "address": "ул. Фадеева, 42В",
+    "phone": "+7 (987) 940-00-80",
+    "booking_telegram_url": "https://t.me/nu_smr2",
+    "booking_max_url": "https://max.ru/u/f9LHodD0cOIyNN2ifHCDsuFYjgAsnGvnT2wCCvkmYn-9eGHRs88UtEYKzHs",
+    "has_kitchen": true,
+    "short_description": "Не усложняй на Фадеева. Кухня от наших партнёров Gellert Bar. Пиво, сидр и медовуха.",
+    "hero_image_url": "/venues/samara-fadeeva/01.webp",
+    "gallery_urls": [
+      "/venues/samara-fadeeva/01.webp",
+      "/venues/samara-fadeeva/02.webp",
+      "/venues/samara-fadeeva/03.webp",
+      "/venues/samara-fadeeva/04.webp",
+      "/venues/samara-fadeeva/05.webp",
+      "/venues/samara-fadeeva/06.webp",
+      "/venues/samara-fadeeva/07.webp",
+      "/venues/samara-fadeeva/08.webp",
+      "/venues/samara-fadeeva/09.webp"
+    ]
+  }
+]
