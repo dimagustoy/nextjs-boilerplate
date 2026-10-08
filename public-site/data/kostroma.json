@@ -1,0 +1,28 @@
+{
+  "slug": "kostroma-gornaya-27a",
+  "name": "Лаунж-бар «Не усложняй»",
+  "city": "Кострома",
+  "address": "ул. Горная, 27А",
+  "phone": "+7 930 091-04-57",
+  "booking_telegram_url": "https://t.me/nukostroma_bot",
+  "telegram_channel_url": "https://t.me/nukostroma",
+  "vk_group_url": "https://vk.ru/nu_kostroma",
+  "has_kitchen": true,
+  "has_spirits": true,
+  "has_beer": true,
+  "has_console": true,
+  "short_description": "Лаунж-бар «Не усложняй» в Костроме. Есть кухня, слабый и крепкий алкоголь. Бронирование через Telegram-бота.",
+  "hero_image_url": "/venues/kostroma/01.webp",
+  "gallery_urls": [
+    "/venues/kostroma/01.webp",
+    "/venues/kostroma/02.webp",
+    "/venues/kostroma/03.webp",
+    "/venues/kostroma/04.webp",
+    "/venues/kostroma/05.webp",
+    "/venues/kostroma/06.webp",
+    "/venues/kostroma/07.webp",
+    "/venues/kostroma/08.webp",
+    "/venues/kostroma/09.webp",
+    "/venues/kostroma/10.webp"
+  ]
+}
