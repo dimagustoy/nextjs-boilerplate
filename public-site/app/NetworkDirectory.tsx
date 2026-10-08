@@ -61,6 +61,7 @@ function PlaceCard({ place }: { place: Place }) {
 export default function NetworkDirectory() {
   const [places, setPlaces] = useState<Place[]>(fallbackPlaces);
   const [cmsReady, setCmsReady] = useState(false);
+  const [selectedCity, setSelectedCity] = useState("Екатеринбург");
 
   useEffect(() => {
     fetch("/api/content", { cache: "no-store" })
@@ -89,6 +90,7 @@ export default function NetworkDirectory() {
   const defaultCity = grouped.some((group) => group.name === "Екатеринбург")
     ? "Екатеринбург"
     : grouped[0]?.name;
+  const activeCity = grouped.some((group) => group.name === selectedCity) ? selectedCity : defaultCity;
 
   const nativeSwitcherCss = grouped.map((group, index) => {
     const id = `network-city-choice-${index}`;
@@ -124,6 +126,12 @@ export default function NetworkDirectory() {
         </div>
 
         <div className="network-city-switcher">
+          <label className="network-mobile-city">
+            <span>Твой город</span>
+            <select aria-label="Выбрать город" value={activeCity || ""} onChange={(event) => setSelectedCity(event.target.value)}>
+              {grouped.map((group) => <option key={group.name} value={group.name}>{group.name}</option>)}
+            </select>
+          </label>
           {grouped.map((group, index) => {
             const id = `network-city-choice-${index}`;
             return (
@@ -133,7 +141,8 @@ export default function NetworkDirectory() {
                 id={id}
                 type="radio"
                 name="network-city"
-                defaultChecked={group.name === defaultCity}
+                checked={group.name === activeCity}
+                onChange={() => setSelectedCity(group.name)}
                 aria-label={`Показать заведения: ${group.name}`}
               />
             );

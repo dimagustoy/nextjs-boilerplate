@@ -41,6 +41,17 @@ export default function Home() {
   const [leadState, setLeadState] = useState<"idle" | "loading" | "success" | "error">("idle");
 
   useEffect(() => {
+    if (!menuOpen) return;
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      setMenuOpen(false);
+      document.getElementById("site-menu-button")?.focus();
+    }
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [menuOpen]);
+
+  useEffect(() => {
     async function loadCms() {
       try {
         const res = await fetch("/api/content", { cache: "no-store" });
@@ -82,14 +93,14 @@ export default function Home() {
     <main>
       <header className="site-header">
         <a className="brand" href="#top" aria-label="Не Усложняй">НЕ<br />УСЛОЖНЯЙ</a>
-        <nav className={menuOpen ? "nav nav-open" : "nav"}>
+        <nav id="site-menu" className={menuOpen ? "nav nav-open" : "nav"}>
           <a href="#all-places" onClick={() => setMenuOpen(false)}>Заведения</a>
           <a href="#journal" onClick={() => setMenuOpen(false)}>Журнал</a>
           <a href="#about" onClick={() => setMenuOpen(false)}>О нас</a>
           <a href="#franchise" onClick={() => setMenuOpen(false)}>Франшиза</a>
         </nav>
         <a className="header-cta" href="#all-places">Найти NU</a>
-        <button className="menu-button" onClick={() => setMenuOpen(!menuOpen)} aria-label="Меню">{menuOpen ? "×" : "☰"}</button>
+        <button id="site-menu-button" className="menu-button" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? "Закрыть меню" : "Открыть меню"} aria-expanded={menuOpen} aria-controls="site-menu">{menuOpen ? "×" : "☰"}</button>
       </header>
 
       <section className="hero" id="top">

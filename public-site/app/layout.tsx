@@ -7,6 +7,7 @@ import "./atmosphere-v3.css";
 import "./progressive-directory.css";
 import "./network-native.css";
 import "./hero-carousel.css";
+import "./mobile.css";
 
 export const metadata: Metadata = {
   title: "Не Усложняй — места, люди, истории",
@@ -16,7 +17,14 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="ru">
-      <body>{children}</body>
+      <body>
+        {children}
+        <nav className="mobile-navigation" aria-label="Мобильная навигация">
+          <a href="/#all-places">Заведения</a>
+          <a href="/#journal">Журнал</a>
+          <a href="/#about">О нас</a>
+        </nav>
+      </body>
     </html>
   );
 }
