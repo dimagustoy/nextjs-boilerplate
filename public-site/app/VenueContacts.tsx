@@ -43,6 +43,6 @@ export default function VenueContacts({ place, className }: { place: VenueContac
     if (field === "booking_whatsapp_url" && hasMax) return null;
     const href = safeContactUrl(place[field]);
     const icon = field === "booking_telegram_url" || field === "booking_telegram_secondary_url" || field === "booking_max_url" || field === "telegram_channel_url";
-    return href ? <a key={field} className={[className, icon ? "venue-contact-icon" : ""].filter(Boolean).join(" ")} href={href} title={icon ? label : undefined} aria-label={icon ? label : undefined} target="_blank" rel="noopener noreferrer">{icon ? <MessengerIcon max={field === "booking_max_url"} /> : `${label} ↗`}</a> : null;
+    return href ? <a key={field} className={[className, icon ? "venue-contact-icon" : "", field.startsWith("booking_") ? "venue-contact-booking" : "venue-contact-social"].filter(Boolean).join(" ")} href={href} title={icon ? label : undefined} aria-label={icon ? label : undefined} target="_blank" rel="noopener noreferrer">{icon ? <MessengerIcon max={field === "booking_max_url"} /> : `${label} ↗`}</a> : null;
   })}</>;
 }
