@@ -8,6 +8,7 @@ const linkFields = [
   ["vk_group_url", "Группа ВКонтакте", "https://vk.com/group"],
   ["instagram_url", "Instagram", "https://www.instagram.com/profile/"],
   ["booking_telegram_url", "Бронирование · Telegram", "https://t.me/contact"],
+  ["booking_telegram_secondary_url", "Бронирование · Telegram (второй)", "https://t.me/contact"],
   ["booking_vk_url", "Бронирование · ВКонтакте", "https://vk.ru/community"],
   ["booking_website_url", "Бронирование · сайт", "https://venue.example/"],
   ["booking_max_url", "Бронирование · MAX", "https://max.ru/…"],
@@ -21,9 +22,9 @@ const amenityFields = [
 ] as const;
 type LinkField = typeof linkFields[number][0];
 type AmenityField = typeof amenityFields[number][0];
-type Venue = { id: string; city: string; name: string; rating_yandex: number | null; rating_2gis: number | null }
+type Venue = { phone: string | null; phone_secondary: string | null; id: string; city: string; name: string; rating_yandex: number | null; rating_2gis: number | null }
   & Record<LinkField, string | null> & Record<AmenityField, boolean | null>;
-const selectFields = ["id", "city", "name", "rating_yandex", "rating_2gis", ...linkFields.map(([field]) => field), ...amenityFields.map(([field]) => field)].join(",");
+const selectFields = ["id", "city", "name", "phone", "phone_secondary", "rating_yandex", "rating_2gis", ...linkFields.map(([field]) => field), ...amenityFields.map(([field]) => field)].join(",");
 const inputClass = "mt-1 w-full rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900";
 
 export default function VenueEditor() {
@@ -58,7 +59,7 @@ export default function VenueEditor() {
         links[field] = parsed.href;
       }
       const amenities = Object.fromEntries(amenityFields.map(([field]) => [field, draft[field]]));
-      const patch = { ...links, ...amenities, rating_yandex: draft.rating_yandex, rating_2gis: draft.rating_2gis, updated_at: new Date().toISOString() };
+      const patch = { phone: draft.phone?.trim() || null, phone_secondary: draft.phone_secondary?.trim() || null, ...links, ...amenities, rating_yandex: draft.rating_yandex, rating_2gis: draft.rating_2gis, updated_at: new Date().toISOString() };
       const { data, error } = await supabase.from("site_locations").update(patch).eq("id", draft.id).select(selectFields).single();
       if (error) throw error;
       const saved = data as unknown as Venue;
@@ -76,6 +77,10 @@ export default function VenueEditor() {
       <label className="block text-sm font-semibold">Заведение<select className={inputClass} value={draft.id} disabled={saving} onChange={(event) => {
         setDraft(venues.find((venue) => venue.id === event.target.value) || null); setNotice("");
       }}>{venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.city} · {venue.name}</option>)}</select></label>
+      <fieldset disabled={saving} className="grid gap-4 md:grid-cols-2">
+        <legend className="sr-only">Телефоны для бронирования</legend>
+        {(["phone", "phone_secondary"] as const).map((field, index) => <label key={field} className="text-sm font-semibold">{index ? "Второй телефон" : "Телефон"}<input type="tel" className={inputClass} value={draft[field] || ""} onChange={(event) => setDraft({ ...draft, [field]: event.target.value })} /></label>)}
+      </fieldset>
       <fieldset disabled={saving} className="grid gap-4 md:grid-cols-2">
         <legend className="sr-only">Ссылки заведения</legend>
         {linkFields.map(([field, label, placeholder]) => <label key={field} className="text-sm font-semibold">{label}<input type="url" placeholder={placeholder} className={inputClass} value={draft[field] || ""} onChange={(event) => setDraft({ ...draft, [field]: event.target.value })} /></label>)}

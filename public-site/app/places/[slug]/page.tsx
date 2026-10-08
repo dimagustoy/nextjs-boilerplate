@@ -1,3 +1,4 @@
+import VenuePhones from "../../VenuePhones";
 import VenueAmenities from "../../VenueAmenities";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -14,7 +15,7 @@ async function getPlace(slug: string) {
     const supabase = createClient(url, key, { auth: { persistSession: false } });
     const { data } = await supabase
       .from("site_locations")
-      .select("slug,city,name,address,phone,short_description,hero_image_url,gallery_urls,two_gis_url,yandex_maps_url,messenger_url,rating_2gis,rating_yandex,opening_hours,telegram_channel_url,vk_group_url,instagram_url,booking_telegram_url,booking_website_url,booking_vk_url,booking_max_url,booking_whatsapp_url,has_kitchen,has_spirits,has_beer,has_console")
+      .select("slug,city,name,address,phone,phone_secondary,short_description,hero_image_url,gallery_urls,two_gis_url,yandex_maps_url,messenger_url,rating_2gis,rating_yandex,opening_hours,telegram_channel_url,vk_group_url,instagram_url,booking_telegram_url,booking_telegram_secondary_url,booking_website_url,booking_vk_url,booking_max_url,booking_whatsapp_url,has_kitchen,has_spirits,has_beer,has_console")
       .eq("slug", slug)
       .eq("is_published", true)
       .maybeSingle();
@@ -63,7 +64,7 @@ export default async function PlacePage({ params }: { params: Promise<{ slug: st
           <p>{place.short_description}</p>
           <div className="place-detail-actions">
             <VenueContacts place={place} className="button button-light" />
-            {place.phone && <a className="button button-orange" href={`tel:${String(place.phone).replace(/[^+\d]/g, "")}`}>Позвонить</a>}
+            <VenuePhones place={place} className="button button-orange" />
             {place.two_gis_url && <a className="button button-light" href={place.two_gis_url} target="_blank" rel="noreferrer">Маршрут в 2ГИС ↗</a>}
             {place.yandex_maps_url && <a className="button button-light" href={place.yandex_maps_url} target="_blank" rel="noreferrer">Яндекс Карты ↗</a>}
           </div>
@@ -103,7 +104,7 @@ export default async function PlacePage({ params }: { params: Promise<{ slug: st
         <h2>УВИДИМСЯ<br />В NU.</h2>
         <div className="place-detail-actions">
             <VenueContacts place={place} className="button button-light" />
-          {place.phone && <a className="button button-orange" href={`tel:${String(place.phone).replace(/[^+\d]/g, "")}`}>Позвонить</a>}
+          <VenuePhones place={place} className="button button-orange" />
           {safeContactUrl(place.messenger_url) && !place.booking_telegram_url && !place.booking_max_url && !place.booking_whatsapp_url && <a className="button button-light" href={safeContactUrl(place.messenger_url)!} target="_blank" rel="noreferrer">Написать ↗</a>}
           {!place.phone && !place.messenger_url && <Link className="button button-orange" href="/">На главную</Link>}
         </div>

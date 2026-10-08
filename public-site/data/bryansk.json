@@ -1,0 +1,29 @@
+{
+  "slug": "bryansk-ulyanova-123a",
+  "name": "Не Усложняй",
+  "city": "Брянск",
+  "address": "ул. Ульянова, 123А",
+  "phone": "+7 920 601-02-20",
+  "phone_secondary": "+7 920 846-69-22",
+  "booking_telegram_url": "https://t.me/nubrnsk_32",
+  "booking_telegram_secondary_url": "https://t.me/nubrnsk32",
+  "telegram_channel_url": "https://t.me/nubrnsk",
+  "vk_group_url": "https://vk.ru/nubrnsk32",
+  "has_kitchen": false,
+  "has_spirits": false,
+  "has_beer": false,
+  "has_console": true,
+  "short_description": "Не Усложняй в Брянске. Пространство для компании, общения и спокойных вечеров. Без кухни и алкоголя.",
+  "hero_image_url": "/venues/bryansk/01.webp",
+  "gallery_urls": [
+    "/venues/bryansk/01.webp",
+    "/venues/bryansk/02.webp",
+    "/venues/bryansk/03.webp",
+    "/venues/bryansk/04.webp",
+    "/venues/bryansk/05.webp",
+    "/venues/bryansk/06.webp",
+    "/venues/bryansk/07.webp",
+    "/venues/bryansk/08.webp",
+    "/venues/bryansk/09.webp"
+  ]
+}

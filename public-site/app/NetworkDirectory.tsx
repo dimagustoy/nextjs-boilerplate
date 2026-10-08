@@ -1,5 +1,6 @@
 "use client";
 
+import VenuePhones from "./VenuePhones";
 import VenueAmenities from "./VenueAmenities";
 
 import { useEffect, useMemo, useState } from "react";
@@ -48,7 +49,7 @@ function PlaceCard({ place }: { place: Place }) {
         <div className="network-card-actions">
           <VenueContacts place={place} />
           <a className="network-primary" href={`/places/${place.slug}`}>Смотреть место →</a>
-          {place.phone && <a href={`tel:${place.phone.replace(/[^+\d]/g, "")}`}>Позвонить</a>}
+          <VenuePhones place={place} />
           {place.two_gis_url && <a href={place.two_gis_url} target="_blank" rel="noreferrer">2ГИС ↗</a>}
           {place.yandex_maps_url && <a href={place.yandex_maps_url} target="_blank" rel="noreferrer">Яндекс ↗</a>}
         </div>

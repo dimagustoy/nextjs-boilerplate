@@ -27,7 +27,7 @@ export default function VenueAmenities({ place }: { place: VenueAmenityFields })
     {amenities.map(([field, label]) => {
       const state = place[field];
       const comingSoon = state !== true && place.slug === "ekb-beloglazova-2g" && (field === "has_kitchen" || field === "has_spirits");
-      if ((field === "has_kitchen" || field === "has_spirits") && state !== true && !comingSoon) return null;
+      if ((field === "has_kitchen" || field === "has_spirits" || field === "has_beer") && state !== true && !comingSoon) return null;
       return <li key={field} className={`venue-amenity${state === true ? " venue-amenity-active" : comingSoon ? " venue-amenity-soon" : ""}`}>
         <AmenityIcon field={field} />
         <span>{comingSoon && field === "has_spirits" ? "Бар" : label}<small>{state === true ? "✓ Есть" : comingSoon ? "СКОРО" : state === false ? "— Нет" : "? Уточняется"}</small></span>
