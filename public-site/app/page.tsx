@@ -192,7 +192,7 @@ export default function Home() {
           <input name="city" aria-label="Город" autoComplete="address-level2" placeholder="Город" required minLength={2} />
           <select name="budget" aria-label="Бюджет на запуск" defaultValue="">
             <option value="" disabled>Бюджет на запуск</option>
-            <option>5–10 млн ₽</option>
+            <option>7–10 млн ₽</option>
             <option>10–15 млн ₽</option>
             <option>15–20 млн ₽</option>
             <option>20+ млн ₽</option>

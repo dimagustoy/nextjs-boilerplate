@@ -1,0 +1,29 @@
+{
+  "slug": "irkutsk-uritskogo-7a",
+  "name": "Не усложняй",
+  "city": "Иркутск",
+  "address": "ул. Урицкого, 7А, 2-й этаж",
+  "phone": "+7 914 898-57-44",
+  "hero_image_url": "/venues/irkutsk/01.webp",
+  "gallery_urls": [
+    "/venues/irkutsk/01.webp",
+    "/venues/irkutsk/02.webp",
+    "/venues/irkutsk/03.webp",
+    "/venues/irkutsk/04.webp",
+    "/venues/irkutsk/05.webp",
+    "/venues/irkutsk/06.webp",
+    "/venues/irkutsk/07.webp",
+    "/venues/irkutsk/08.webp",
+    "/venues/irkutsk/09.webp",
+    "/venues/irkutsk/10.webp"
+  ],
+  "booking_telegram_url": "https://t.me/nuirk1",
+  "booking_whatsapp_url": "https://wa.me/79148985744",
+  "booking_max_url": null,
+  "telegram_channel_url": "https://t.me/nuirk1",
+  "vk_group_url": "https://vk.com/nuirk1",
+  "has_kitchen": false,
+  "has_spirits": false,
+  "has_beer": true,
+  "has_console": true
+}
