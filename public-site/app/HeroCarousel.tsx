@@ -31,13 +31,20 @@ const preferredOrder = [
 
 function normalizeSlides(input: any[]): HeroSlide[] {
   const slides = input
-    .filter((place) => place?.slug && place?.city && place?.name && place?.hero_image_url)
-    .map((place) => ({
-      slug: String(place.slug),
-      city: String(place.city),
-      name: String(place.name),
-      hero_image_url: (heroImages as Record<string, string>)[String(place.hero_image_url)] || String(place.hero_image_url),
-    }));
+    .filter((place) => place?.slug && place?.city && place?.name)
+    .flatMap((place) => {
+      const firstPhoto = Array.isArray(place.gallery_urls) ? place.gallery_urls[0] : null;
+      const image = typeof firstPhoto === "string" && firstPhoto.trim()
+        ? firstPhoto.trim()
+        : typeof place.hero_image_url === "string" ? place.hero_image_url.trim() : "";
+      if (!image) return [];
+      return [{
+        slug: String(place.slug),
+        city: String(place.city),
+        name: String(place.name),
+        hero_image_url: (heroImages as Record<string, string>)[image] || image,
+      }];
+    });
 
   return slides.sort((a, b) => {
     const ai = preferredOrder.indexOf(a.slug);
