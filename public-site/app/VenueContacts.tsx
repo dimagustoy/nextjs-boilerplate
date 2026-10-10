@@ -1,4 +1,5 @@
 export type VenueContactFields = {
+  booking_max_phone?: string | null;
   telegram_channel_url?: string | null;
   vk_group_url?: string | null;
   instagram_url?: string | null;
@@ -38,11 +39,10 @@ function MessengerIcon({ max }: { max: boolean }) {
 }
 
 export default function VenueContacts({ place, className }: { place: VenueContactFields; className?: string }) {
-  const hasMax = Boolean(safeContactUrl(place.booking_max_url));
   return <>{contacts.map(([field, label]) => {
-    if (field === "booking_whatsapp_url" && hasMax) return null;
     const href = safeContactUrl(place[field]);
+    const contactLabel = field === "booking_telegram_secondary_url" && href === "https://t.me/NUEKB_bot" ? "Бронировать через Telegram-бота" : label;
     const icon = field === "booking_telegram_url" || field === "booking_telegram_secondary_url" || field === "booking_max_url" || field === "telegram_channel_url";
-    return href ? <a key={field} className={[className, icon ? "venue-contact-icon" : "", field.startsWith("booking_") ? "venue-contact-booking" : "venue-contact-social"].filter(Boolean).join(" ")} href={href} title={icon ? label : undefined} aria-label={icon ? label : undefined} target="_blank" rel="noopener noreferrer">{icon ? <MessengerIcon max={field === "booking_max_url"} /> : `${label} ↗`}</a> : null;
-  })}</>;
+    return href ? <a key={field} className={[className, icon ? "venue-contact-icon" : "", field.startsWith("booking_") ? "venue-contact-booking" : "venue-contact-social"].filter(Boolean).join(" ")} href={href} title={icon ? contactLabel : undefined} aria-label={icon ? contactLabel : undefined} target="_blank" rel="noopener noreferrer">{icon ? <MessengerIcon max={field === "booking_max_url"} /> : `${contactLabel} ↗`}</a> : null;
+  })}{place.booking_max_phone && <span className={className}>MAX: {place.booking_max_phone}</span>}</>;
 }

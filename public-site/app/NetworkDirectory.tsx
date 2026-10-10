@@ -68,7 +68,7 @@ export default function NetworkDirectory() {
       .then((response) => (response.ok ? response.json() : Promise.reject()))
       .then((data) => {
         if (Array.isArray(data.locations) && data.locations.length) {
-          setPlaces(data.locations as Place[]);
+          setPlaces((data.locations as Place[]).map((place) => ({ ...fallbackPlaces.find((fallback) => fallback.slug === place.slug), ...place })));
           setCmsReady(true);
         }
       })

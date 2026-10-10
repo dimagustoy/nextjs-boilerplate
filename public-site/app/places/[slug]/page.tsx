@@ -19,7 +19,7 @@ async function getPlace(slug: string) {
       .eq("slug", slug)
       .eq("is_published", true)
       .maybeSingle();
-    if (data) return data;
+    if (data) return { ...fallbackPlaces.find((place) => place.slug === slug), ...data };
   }
   const fallback = fallbackPlaces.find((place) => place.slug === slug);
   return fallback ? { ...fallback, gallery_urls: fallback.gallery_urls || [], messenger_url: null } : null;
