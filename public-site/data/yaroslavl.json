@@ -1,0 +1,33 @@
+{
+  "slug": "yaroslavl-deputatskiy-2",
+  "name": "Не Усложняй",
+  "address": "Депутатский переулок, 2, 2 этаж",
+  "phone": "+7 (4852) 99-69-69",
+  "phone_secondary": null,
+  "has_kitchen": true,
+  "has_spirits": false,
+  "has_beer": true,
+  "messenger_url": null,
+  "booking_telegram_url": null,
+  "booking_telegram_secondary_url": null,
+  "booking_whatsapp_url": null,
+  "booking_max_url": null,
+  "booking_max_phone": null,
+  "telegram_channel_url": null,
+  "vk_group_url": "https://vk.ru/nu_yar",
+  "instagram_url": "https://www.instagram.com/nu_yar1",
+  "short_description": "Кальяны и кухня в центре Ярославля. Из алкоголя — только пиво.",
+  "hero_image_url": "/venues/yaroslavl/01.webp",
+  "gallery_urls": [
+    "/venues/yaroslavl/01.webp",
+    "/venues/yaroslavl/02.webp",
+    "/venues/yaroslavl/03.webp",
+    "/venues/yaroslavl/04.webp",
+    "/venues/yaroslavl/05.webp",
+    "/venues/yaroslavl/06.webp",
+    "/venues/yaroslavl/07.webp",
+    "/venues/yaroslavl/08.webp",
+    "/venues/yaroslavl/09.webp",
+    "/venues/yaroslavl/10.webp"
+  ]
+}

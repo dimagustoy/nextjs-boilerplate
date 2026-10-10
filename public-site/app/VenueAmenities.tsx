@@ -26,10 +26,11 @@ export default function VenueAmenities({ place }: { place: VenueAmenityFields })
   return <ul className="venue-amenities" aria-label="Что есть в заведении">
     {amenities.map(([field, label]) => {
       const state = place[field];
-      if ((field === "has_kitchen" || field === "has_spirits" || field === "has_beer") && state !== true) return null;
-      return <li key={field} className={`venue-amenity${state === true ? " venue-amenity-active" : ""}`}>
+      const comingSoon = state !== true && place.slug === "ekb-beloglazova-2g" && (field === "has_kitchen" || field === "has_spirits");
+      if ((field === "has_kitchen" || field === "has_spirits" || field === "has_beer") && state !== true && !comingSoon) return null;
+      return <li key={field} className={`venue-amenity${state === true ? " venue-amenity-active" : comingSoon ? " venue-amenity-soon" : ""}`}>
         <AmenityIcon field={field} />
-        <span>{field === "has_beer" && place.slug?.startsWith("ekb-") ? "Пиво и сидр" : label}<small>{state === true ? "✓ Есть" : state === false ? "— Нет" : "? Уточняется"}</small></span>
+        <span>{comingSoon && field === "has_spirits" ? "Бар" : field === "has_beer" && place.slug?.startsWith("ekb-") ? "Пиво и сидр" : label}<small>{state === true ? "✓ Есть" : comingSoon ? "СКОРО" : state === false ? "— Нет" : "? Уточняется"}</small></span>
       </li>;
     })}
   </ul>;
