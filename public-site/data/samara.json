@@ -15,14 +15,14 @@
     "booking_max_url": "https://max.ru/u/f9LHodD0cOIPCGznB4S0qK__krgFXYLSHRKD3pqXA0odeaGTJSel8YgarIs",
     "has_kitchen": false,
     "short_description": "Если план на вечер — кальян, друзья и никаких лишних пунктов программы, вы по адресу. На Карла Маркса можно взять пиво, устроиться компанией и просто хорошо провести время.",
-    "hero_image_url": "/venues/samara-marksa/01.webp",
+    "hero_image_url": "/venues/samara-marksa-20261012/01.webp",
     "gallery_urls": [
-      "/venues/samara-marksa/01.webp",
-      "/venues/samara-marksa/02.webp",
-      "/venues/samara-marksa/03.webp",
-      "/venues/samara-marksa/04.webp",
-      "/venues/samara-marksa/05.webp",
-      "/venues/samara-marksa/06.webp"
+      "/venues/samara-marksa-20261012/01.webp",
+      "/venues/samara-marksa-20261012/02.webp",
+      "/venues/samara-marksa-20261012/03.webp",
+      "/venues/samara-marksa-20261012/04.webp",
+      "/venues/samara-marksa-20261012/05.webp",
+      "/venues/samara-marksa-20261012/06.webp"
     ]
   },
   {
@@ -41,17 +41,13 @@
     "booking_max_url": "https://max.ru/u/f9LHodD0cOIyNN2ifHCDsuFYjgAsnGvnT2wCCvkmYn-9eGHRs88UtEYKzHs",
     "has_kitchen": true,
     "short_description": "Когда одного кальяна мало: на Фадеева к нему можно добавить кухню от Gellert Bar, пиво, сидр или медовуху. Один адрес вместо нескольких остановок за вечер.",
-    "hero_image_url": "/venues/samara-fadeeva/01.webp",
+    "hero_image_url": "/venues/samara-fadeeva-20261012/01.webp",
     "gallery_urls": [
-      "/venues/samara-fadeeva/01.webp",
-      "/venues/samara-fadeeva/02.webp",
-      "/venues/samara-fadeeva/03.webp",
-      "/venues/samara-fadeeva/04.webp",
-      "/venues/samara-fadeeva/05.webp",
-      "/venues/samara-fadeeva/06.webp",
-      "/venues/samara-fadeeva/07.webp",
-      "/venues/samara-fadeeva/08.webp",
-      "/venues/samara-fadeeva/09.webp"
+      "/venues/samara-fadeeva-20261012/01.webp",
+      "/venues/samara-fadeeva-20261012/02.webp",
+      "/venues/samara-fadeeva-20261012/03.webp",
+      "/venues/samara-fadeeva-20261012/04.webp",
+      "/venues/samara-fadeeva-20261012/05.webp"
     ]
   }
 ]
