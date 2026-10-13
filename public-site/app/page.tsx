@@ -178,7 +178,7 @@ export default function Home() {
 
       <section className="photo-strip" aria-label="Атмосфера Не Усложняй">
         <div className="strip-photo strip-one" role="img" aria-label="Не Усложняй: Гагарин, Екатеринбург" />
-        <div className="strip-copy"><small>ВЕЧЕР НЕ НУЖНО</small>УСЛОЖНЯТЬ<span>ЕГО НУЖНО<br />ПРОЖИТЬ.</span></div>
+        <div className="strip-copy"><small>МОЖНО НИКУДА</small>НЕ СПЕШИТЬ.<span>ТЫ УЖЕ<br />НА МЕСТЕ.</span></div>
         <div className="strip-photo strip-two" role="img" aria-label="Не Усложняй, Кострома" />
         <div className="strip-photo strip-three" role="img" aria-label="Не Усложняй, Астрахань" />
       </section>
