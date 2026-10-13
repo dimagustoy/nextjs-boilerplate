@@ -150,7 +150,8 @@
   .strip-copy small { font-size: 11px; margin-bottom: 18px; }
   .strip-copy span { color: #151515; }
   .photo-strip .strip-photo { min-height: 0; height: 170px; }
-  .photo-strip .strip-three { display: none; }
+  .photo-strip .strip-three { grid-column: 1 / -1; height: 240px; }
+
   .franchise { padding: 48px 20px; gap: 32px; }
   .franchise h2 { font-size: clamp(36px, 10vw, 58px); line-height: .94; }
   .franchise h2 span { color: #8a4800; }
